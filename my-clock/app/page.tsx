@@ -4,7 +4,7 @@ import ClockScreen from "./components/ClockScreen";
 import { useIdleTimer } from "./hooks/useIdleTimer";
 
 export default function Home(){
-  const { isIdle } = useIdleTimer({ timeoutMs: 30_000});
+  const { isIdle, reset } = useIdleTimer({ timeoutMs: 30_000});
 
   return(
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -16,7 +16,9 @@ export default function Home(){
       </div>
 
       {isIdle && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50"
+        onClick={reset}
+        onTouchStart={reset}>
           <ClockScreen />
         </div>
       )}
