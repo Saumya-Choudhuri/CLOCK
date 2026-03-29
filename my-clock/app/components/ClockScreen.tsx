@@ -1,32 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
-function pad(num: number) {
-    return num.toString().padStart(2, "0");
+import { useEffect, useMemo, useState } from "react";
+
+function pad(n: number) {
+  return n.toString().padStart(2, "0");
 }
 
 export default function ClockScreen() {
-    const [now, setNow] = useState(new Date());
-    useEffect(()=>{
-        const id = setInterval(() => setNow(new Date()), 1000);
-        return ()=> clearInterval(id);
-    },[]);
-    const hours = pad(now.getHours());
-    const minutes = pad(now.getMinutes());
-    const seconds = pad(now.getSeconds());
-    const dateString = now.toLocaleDateString(undefined, {weekday: "short", month: "short", day:"numeric", year: "numeric",});
-     return (
-     <div className="relative flex h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 overflow-hidden">
-       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.05),transparent_40%)]" />
-       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(56,189,248,0.08),transparent_45%)] blur-3xl" />
-       <div className="relative text-center space-y-4">
-         <div className="text-7xl md:text-8xl font-semibold tracking-tight">
-           {hours}:{minutes}
-           <span className="text-slate-400">:{seconds}</span>
-         </div>
-         <div className="text-lg text-slate-300">{dateString}</div>
-       </div>
-     </div>
-   );
+  const [now, setNow] = useState<Date | null>(null);
 
+  useEffect(() => {
+    setNow(new Date()); // set initial time only on client
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const time = useMemo(() => {
+    if (!now) return "--:--:--";
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const s = now.getSeconds();
+    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  }, [now]);
+
+  const date = useMemo(() => {
+    if (!now) return "Loading date...";
+    return now.toLocaleDateString(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }, [now]);
+
+  return (
+    <div className="h-full w-full flex items-center justify-center bg-white">
+      <div className="text-center">
+        <div className="text-7xl font-bold tabular-nums">{time}</div>
+        <div className="mt-3 text-slate-600">{date}</div>
+      </div>
+    </div>
+  );
 }
