@@ -8,9 +8,11 @@ function pad(n: number) {
 
 function formatMs(ms: number) {
   const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${pad(minutes)}:${pad(seconds)}`;
+
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 export default function CounterPanel() {
@@ -50,7 +52,7 @@ export default function CounterPanel() {
   };
 
   const startWithCountdown = () => {
-    if (running) return;
+    if (running || preCount !== null) return;
     setPreCount(3);
   };
 
@@ -93,7 +95,7 @@ export default function CounterPanel() {
               className="px-4 py-2 rounded bg-slate-900 text-white"
               onClick={startWithCountdown}
             >
-              Start (3-2-1)
+              Start
             </button>
           ) : (
             <button
