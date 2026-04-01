@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ClockPanel from "./sections/ClockPanel";
 import CounterPanel from "./sections/CounterPanel";
 import ProgressPanel from "./sections/ProgressPanel";
@@ -10,6 +10,9 @@ type Tab = "clock" | "counter" | "progress";
 export default function Home() {
   const [tab, setTab] = useState<Tab>("clock");
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+  const [overlayOpacity, setOverlayOpacity] = useState(0.6);
+  const [backgroundOpacity, setBackgroundOpacity] = useState(0.6);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   function handleBackgroundChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -19,6 +22,33 @@ export default function Home() {
     console.log("Background URL set:", objectUrl);
     setBackgroundUrl(objectUrl);
   }
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("clock_overlay_opacity");
+    if (saved) setOverlayOpacity(Number(saved));
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("clock_overlay_opacity", String(overlayOpacity));
+  }, [overlayOpacity]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("clock_background_opacity");
+    if (saved) setBackgroundOpacity(Number(saved));
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("clock_background_opacity", String(backgroundOpacity));
+  }, [backgroundOpacity]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("clock_theme");
+    if (saved) setTheme(saved as "light" | "dark");
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("clock_theme", theme);
+  }, [theme]);
 
   const title = useMemo(() => {
     if (tab === "clock") return "Clock";
@@ -75,8 +105,28 @@ export default function Home() {
       </header>
 
       <section className="p-6">
-        {tab === "clock" && <ClockPanel backgroundUrl={backgroundUrl} />}
-        {tab === "counter" && <CounterPanel />}
+        {tab === "clock" && (
+          <ClockPanel
+            backgroundUrl={backgroundUrl}
+            overlayOpacity={overlayOpacity}
+            backgroundOpacity={backgroundOpacity}
+            theme={theme}
+            onOpacityChange={setOverlayOpacity}
+            onBackgroundOpacityChange={setBackgroundOpacity}
+            onThemeChange={setTheme}
+          />
+        )}
+        {tab === "counter" && (
+          <CounterPanel
+            backgroundUrl={backgroundUrl}
+            overlayOpacity={overlayOpacity}
+            backgroundOpacity={backgroundOpacity}
+            theme={theme}
+            onOpacityChange={setOverlayOpacity}
+            onBackgroundOpacityChange={setBackgroundOpacity}
+            onThemeChange={setTheme}
+          />
+        )}
         {tab === "progress" && <ProgressPanel />}
       </section>
     </main>

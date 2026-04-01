@@ -43,7 +43,7 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
         <div
           className="text-7xl font-bold tabular-nums"
           style={{
-            color: theme === "dark" ? "#ffffff" : "#0f172a",
+            color: theme === "light" ? "#ffffff" : "#0f172a",
           }}
         >
           {time}
@@ -51,7 +51,7 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
         <div
           className="mt-3"
           style={{
-            color: theme === "dark" ? "#cbd5e1" : "#475569",
+            color: theme === "light" ? "#cbd5e1" : "#475569",
           }}
         >
           {date}

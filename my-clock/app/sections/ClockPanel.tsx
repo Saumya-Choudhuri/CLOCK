@@ -5,12 +5,24 @@ import ClockScreen from "../components/ClockScreen";
 
 interface ClockPanelProps {
   backgroundUrl?: string | null;
+  overlayOpacity?: number;
+  backgroundOpacity?: number;
+  theme?: "light" | "dark";
+  onOpacityChange?: (opacity: number) => void;
+  onBackgroundOpacityChange?: (opacity: number) => void;
+  onThemeChange?: (theme: "light" | "dark") => void;
 }
 
-export default function ClockPanel({ backgroundUrl }: ClockPanelProps) {
-  const [overlayOpacity, setOverlayOpacity] = useState(0.6);
-  const [backgroundOpacity, setBackgroundOpacity] = useState(0.6);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+export default function ClockPanel({
+  backgroundUrl,
+  overlayOpacity = 0.6,
+  backgroundOpacity = 0.6,
+  theme = "light",
+  onOpacityChange,
+  onBackgroundOpacityChange,
+  onThemeChange,
+}: ClockPanelProps) {
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [showControls, setShowControls] = useState(true);
@@ -32,33 +44,6 @@ export default function ClockPanel({ backgroundUrl }: ClockPanelProps) {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     setShowControls(true);
   };
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem("clock_overlay_opacity");
-    if (saved) setOverlayOpacity(Number(saved));
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem("clock_overlay_opacity", String(overlayOpacity));
-  }, [overlayOpacity]);
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem("clock_background_opacity");
-    if (saved) setBackgroundOpacity(Number(saved));
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem("clock_background_opacity", String(backgroundOpacity));
-  }, [backgroundOpacity]);
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem("clock_theme");
-    if (saved) setTheme(saved as "light" | "dark");
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem("clock_theme", theme);
-  }, [theme]);
 
   const handleFullscreen = async () => {
     if (!timerRef.current) return;
@@ -149,7 +134,7 @@ export default function ClockPanel({ backgroundUrl }: ClockPanelProps) {
           <div className="flex gap-2 items-center">
             <label className="text-xs text-slate-700 font-medium">Theme:</label>
             <button
-              onClick={() => setTheme("light")}
+              onClick={() => onThemeChange?.("light")}
               className={`px-2 py-1 rounded text-xs border ${
                 theme === "light"
                   ? "bg-slate-900 text-white"
@@ -159,7 +144,7 @@ export default function ClockPanel({ backgroundUrl }: ClockPanelProps) {
               Light
             </button>
             <button
-              onClick={() => setTheme("dark")}
+              onClick={() => onThemeChange?.("dark")}
               className={`px-2 py-1 rounded text-xs border ${
                 theme === "dark"
                   ? "bg-slate-900 text-white"
@@ -178,7 +163,7 @@ export default function ClockPanel({ backgroundUrl }: ClockPanelProps) {
               max={1}
               step={0.05}
               value={overlayOpacity}
-              onChange={(e) => setOverlayOpacity(Number(e.target.value))}
+              onChange={(e) => onOpacityChange?.(Number(e.target.value))}
               className="w-20"
             />
             <div className="text-xs font-mono tabular-nums w-7 text-right">
@@ -194,7 +179,7 @@ export default function ClockPanel({ backgroundUrl }: ClockPanelProps) {
               max={1}
               step={0.05}
               value={backgroundOpacity}
-              onChange={(e) => setBackgroundOpacity(Number(e.target.value))}
+              onChange={(e) => onBackgroundOpacityChange?.(Number(e.target.value))}
               className="w-20"
             />
             <div className="text-xs font-mono tabular-nums w-7 text-right">
