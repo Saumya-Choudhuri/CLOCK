@@ -61,14 +61,14 @@ export default function Home() {
   }, [tab]);
 
   return (
-    <main className="min-h-screen text-slate-900">
-      <header className="p-6 border-b bg-white/80 backdrop-blur flex flex-col gap-4 relative z-20">
-        <h1 className="text-2xl font-bold">{title}</h1>
+    <main className="min-h-screen bg-slate-950 text-slate-50">
+      <header className="p-6 border-b bg-slate-900/95 backdrop-blur flex flex-col gap-4 relative z-20 border-slate-800">
+        <h1 className="text-2xl font-bold text-white">{title}</h1>
 
         <div className="flex gap-2">
           <button
             className={`px-3 py-2 rounded border ${
-              tab === "clock" ? "bg-slate-900 text-white" : "bg-white"
+              tab === "clock" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
             }`}
             onClick={() => setTab("clock")}
           >
@@ -77,7 +77,7 @@ export default function Home() {
 
           <button
             className={`px-3 py-2 rounded border ${
-              tab === "counter" ? "bg-slate-900 text-white" : "bg-white"
+              tab === "counter" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
             }`}
             onClick={() => setTab("counter")}
           >
@@ -86,7 +86,7 @@ export default function Home() {
 
           <button
             className={`px-3 py-2 rounded border ${
-              tab === "progress" ? "bg-slate-900 text-white" : "bg-white"
+              tab === "progress" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
             }`}
             onClick={() => setTab("progress")}
           >
@@ -94,9 +94,9 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-slate-600">
+        <div className="flex items-center gap-2 text-sm text-slate-400">
           <label className="font-medium">Background image:</label>
-          <label className="px-2 py-1 text-xs rounded border bg-slate-900 text-white cursor-pointer hover:bg-slate-800 transition">
+          <label className="px-2 py-1 text-xs rounded border bg-blue-600 text-white cursor-pointer hover:bg-blue-700 transition">
             Choose File
             <input
               type="file"
@@ -108,7 +108,7 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="p-6">
+      <section className="p-6 bg-slate-950">
         {tab === "clock" && (
           <ClockPanel
             backgroundUrl={backgroundUrl}

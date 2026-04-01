@@ -152,7 +152,7 @@ export default function CounterPanel({
   return (
     <div className="space-y-4">
       <div
-        className="rounded-lg overflow-hidden border relative h-[70vh]"
+        className="rounded-lg overflow-hidden border border-slate-700 relative h-[70vh] bg-slate-900"
         ref={timerRef}
         style={isFullscreen ? { height: "100vh", borderRadius: 0 } : {}}
       >
@@ -189,7 +189,7 @@ export default function CounterPanel({
           </video>
         )}
 
-        <div className="absolute top-4 right-4 z-10 flex flex-col gap-3 bg-white/90 backdrop-blur p-4 rounded-lg border transition-opacity duration-300" style={{ opacity: showControls ? 1 : 0, pointerEvents: showControls ? "auto" : "none" }}>
+        <div className="absolute top-4 right-4 z-10 flex flex-col gap-3 bg-slate-800/95 backdrop-blur p-4 rounded-lg border border-slate-700 transition-opacity duration-300" style={{ opacity: showControls ? 1 : 0, pointerEvents: showControls ? "auto" : "none" }}>
           <div className="flex gap-2 items-center">
             {isMounted && (
               <button
@@ -197,7 +197,7 @@ export default function CounterPanel({
                 className={`px-2 py-1 rounded text-xs border font-medium ${
                   isFullscreen
                     ? "bg-blue-600 text-white"
-                    : "bg-white border-slate-300 text-slate-700"
+                    : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
                 }`}
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
@@ -207,13 +207,13 @@ export default function CounterPanel({
           </div>
 
           <div className="flex gap-2 items-center">
-            <label className="text-xs text-slate-700 font-medium">Theme:</label>
+            <label className="text-xs text-slate-300 font-medium">Theme:</label>
             <button
               onClick={() => onThemeChange?.("light")}
               className={`px-2 py-1 rounded text-xs border ${
                 theme === "light"
-                  ? "bg-slate-900 text-white"
-                  : "bg-white border-slate-300"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
               }`}
             >
               Light
@@ -222,8 +222,8 @@ export default function CounterPanel({
               onClick={() => onThemeChange?.("dark")}
               className={`px-2 py-1 rounded text-xs border ${
                 theme === "dark"
-                  ? "bg-slate-900 text-white"
-                  : "bg-white border-slate-300"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
               }`}
             >
               Dark
@@ -231,7 +231,7 @@ export default function CounterPanel({
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-700 font-medium whitespace-nowrap">Brightness:</label>
+            <label className="text-xs text-slate-300 font-medium whitespace-nowrap">Brightness:</label>
             <input
               type="range"
               min={0.2}
@@ -239,15 +239,15 @@ export default function CounterPanel({
               step={0.05}
               value={overlayOpacity}
               onChange={(e) => onOpacityChange?.(Number(e.target.value))}
-              className="w-20"
+              className="w-20 accent-blue-600"
             />
-            <div className="text-xs font-mono tabular-nums w-7 text-right">
+            <div className="text-xs font-mono tabular-nums w-7 text-right text-slate-300">
               {Math.round(overlayOpacity * 100)}%
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-700 font-medium whitespace-nowrap">BG Opacity:</label>
+            <label className="text-xs text-slate-300 font-medium whitespace-nowrap">BG Opacity:</label>
             <input
               type="range"
               min={0.2}
@@ -255,9 +255,9 @@ export default function CounterPanel({
               step={0.05}
               value={backgroundOpacity}
               onChange={(e) => onBackgroundOpacityChange?.(Number(e.target.value))}
-              className="w-20"
+              className="w-20 accent-blue-600"
             />
-            <div className="text-xs font-mono tabular-nums w-7 text-right">
+            <div className="text-xs font-mono tabular-nums w-7 text-right text-slate-300">
               {Math.round(backgroundOpacity * 100)}%
             </div>
           </div>
