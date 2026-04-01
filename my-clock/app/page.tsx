@@ -68,7 +68,7 @@ export default function Home() {
         <div className="flex gap-2">
           <button
             className={`px-3 py-2 rounded border ${
-              tab === "clock" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
+              tab === "clock" ? "bg-violet-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
             }`}
             onClick={() => setTab("clock")}
           >
@@ -77,7 +77,7 @@ export default function Home() {
 
           <button
             className={`px-3 py-2 rounded border ${
-              tab === "counter" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
+              tab === "counter" ? "bg-violet-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
             }`}
             onClick={() => setTab("counter")}
           >
@@ -86,7 +86,7 @@ export default function Home() {
 
           <button
             className={`px-3 py-2 rounded border ${
-              tab === "progress" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
+              tab === "progress" ? "bg-violet-600 text-white" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
             }`}
             onClick={() => setTab("progress")}
           >
@@ -96,7 +96,7 @@ export default function Home() {
 
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <label className="font-medium">Background image:</label>
-          <label className="px-2 py-1 text-xs rounded border bg-blue-600 text-white cursor-pointer hover:bg-blue-700 transition">
+          <label className="px-2 py-1 text-xs rounded border bg-violet-600 text-white cursor-pointer hover:bg-violet-700 transition">
             Choose File
             <input
               type="file"

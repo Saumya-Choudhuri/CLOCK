@@ -196,7 +196,7 @@ export default function CounterPanel({
                 onClick={handleFullscreen}
                 className={`px-2 py-1 rounded text-xs border font-medium ${
                   isFullscreen
-                    ? "bg-blue-600 text-white"
+                    ? "bg-violet-600 text-white"
                     : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
                 }`}
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
@@ -212,7 +212,7 @@ export default function CounterPanel({
               onClick={() => onThemeChange?.("light")}
               className={`px-2 py-1 rounded text-xs border ${
                 theme === "light"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-violet-600 text-white"
                   : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
               }`}
             >
@@ -222,7 +222,7 @@ export default function CounterPanel({
               onClick={() => onThemeChange?.("dark")}
               className={`px-2 py-1 rounded text-xs border ${
                 theme === "dark"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-violet-600 text-white"
                   : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
               }`}
             >
@@ -239,7 +239,7 @@ export default function CounterPanel({
               step={0.05}
               value={overlayOpacity}
               onChange={(e) => onOpacityChange?.(Number(e.target.value))}
-              className="w-20 accent-blue-600"
+              className="w-20 accent-violet-600"
             />
             <div className="text-xs font-mono tabular-nums w-7 text-right text-slate-300">
               {Math.round(overlayOpacity * 100)}%
@@ -255,7 +255,7 @@ export default function CounterPanel({
               step={0.05}
               value={backgroundOpacity}
               onChange={(e) => onBackgroundOpacityChange?.(Number(e.target.value))}
-              className="w-20 accent-blue-600"
+              className="w-20 accent-violet-600"
             />
             <div className="text-xs font-mono tabular-nums w-7 text-right text-slate-300">
               {Math.round(backgroundOpacity * 100)}%
