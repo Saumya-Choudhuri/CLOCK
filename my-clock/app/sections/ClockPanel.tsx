@@ -35,16 +35,13 @@ export default function ClockPanel({
     setIsMounted(true);
   }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseMove = () => {
+    setShowControls(true);
+    
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     hideTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
     }, 2000);
-  };
-
-  const handleMouseEnter = () => {
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    setShowControls(true);
   };
 
   const handleFullscreen = async () => {
@@ -73,34 +70,20 @@ export default function ClockPanel({
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("mousemove", handleMouseMove);
+    
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("mousemove", handleMouseMove);
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, []);
-
-  useEffect(() => {
-    if (!isFullscreen) return;
-
-    const handleMouseMove = () => {
-      setShowControls(true);
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 2000);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    return () => document.removeEventListener("mousemove", handleMouseMove);
-  }, [isFullscreen]);
 
   return (
     <div className="space-y-4">
       <div
         className="rounded-lg overflow-hidden border relative h-[70vh]"
         ref={timerRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
         style={isFullscreen ? { height: "100vh", borderRadius: 0 } : {}}
       >
         {backgroundUrl && backgroundType === "image" && (
