@@ -10,6 +10,7 @@ type Tab = "clock" | "counter" | "progress";
 export default function Home() {
   const [tab, setTab] = useState<Tab>("clock");
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+  const [backgroundType, setBackgroundType] = useState<"image" | "video" | null>(null);
   const [overlayOpacity, setOverlayOpacity] = useState(0.6);
   const [backgroundOpacity, setBackgroundOpacity] = useState(0.6);
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -19,8 +20,11 @@ export default function Home() {
     if (!file) return;
 
     const objectUrl = URL.createObjectURL(file);
-    console.log("Background URL set:", objectUrl);
+    const isVideo = file.type.startsWith("video/");
+    
+    console.log("Background file set:", objectUrl, "Type:", isVideo ? "video" : "image");
     setBackgroundUrl(objectUrl);
+    setBackgroundType(isVideo ? "video" : "image");
   }
 
   useEffect(() => {
@@ -96,7 +100,7 @@ export default function Home() {
             Choose File
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               onChange={handleBackgroundChange}
               className="hidden"
             />
@@ -108,6 +112,7 @@ export default function Home() {
         {tab === "clock" && (
           <ClockPanel
             backgroundUrl={backgroundUrl}
+            backgroundType={backgroundType}
             overlayOpacity={overlayOpacity}
             backgroundOpacity={backgroundOpacity}
             theme={theme}
@@ -119,6 +124,7 @@ export default function Home() {
         {tab === "counter" && (
           <CounterPanel
             backgroundUrl={backgroundUrl}
+            backgroundType={backgroundType}
             overlayOpacity={overlayOpacity}
             backgroundOpacity={backgroundOpacity}
             theme={theme}

@@ -5,6 +5,7 @@ import ClockScreen from "../components/ClockScreen";
 
 interface ClockPanelProps {
   backgroundUrl?: string | null;
+  backgroundType?: "image" | "video" | null;
   overlayOpacity?: number;
   backgroundOpacity?: number;
   theme?: "light" | "dark";
@@ -15,6 +16,7 @@ interface ClockPanelProps {
 
 export default function ClockPanel({
   backgroundUrl,
+  backgroundType,
   overlayOpacity = 0.6,
   backgroundOpacity = 0.6,
   theme = "light",
@@ -101,7 +103,7 @@ export default function ClockPanel({
         onMouseLeave={handleMouseLeave}
         style={isFullscreen ? { height: "100vh", borderRadius: 0 } : {}}
       >
-        {backgroundUrl && (
+        {backgroundUrl && backgroundType === "image" && (
           <div
             style={{
               position: "absolute",
@@ -112,6 +114,26 @@ export default function ClockPanel({
               opacity: backgroundOpacity,
             }}
           />
+        )}
+
+        {backgroundUrl && backgroundType === "video" && (
+          <video
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              opacity: backgroundOpacity,
+            }}
+            autoPlay
+            loop
+            muted
+          >
+            <source src={backgroundUrl} type="video/mp4" />
+            <source src={backgroundUrl} type="video/webm" />
+            <source src={backgroundUrl} type="video/ogg" />
+          </video>
         )}
 
         <div className="absolute top-4 right-4 z-10 flex flex-col gap-3 bg-white/90 backdrop-blur p-4 rounded-lg border transition-opacity duration-300" style={{ opacity: showControls ? 1 : 0, pointerEvents: showControls ? "auto" : "none" }}>
