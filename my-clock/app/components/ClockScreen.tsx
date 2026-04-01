@@ -6,7 +6,11 @@ function pad(n: number) {
   return n.toString().padStart(2, "0");
 }
 
-export default function ClockScreen() {
+interface ClockScreenProps {
+  theme?: "light" | "dark";
+}
+
+export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -34,10 +38,24 @@ export default function ClockScreen() {
   }, [now]);
 
   return (
-    <div className="h-full w-full flex items-center justify-center bg-white">
+    <div className="h-full w-full flex items-center justify-center">
       <div className="text-center">
-        <div className="text-7xl font-bold tabular-nums">{time}</div>
-        <div className="mt-3 text-slate-600">{date}</div>
+        <div
+          className="text-7xl font-bold tabular-nums"
+          style={{
+            color: theme === "dark" ? "#ffffff" : "#0f172a",
+          }}
+        >
+          {time}
+        </div>
+        <div
+          className="mt-3"
+          style={{
+            color: theme === "dark" ? "#cbd5e1" : "#475569",
+          }}
+        >
+          {date}
+        </div>
       </div>
     </div>
   );

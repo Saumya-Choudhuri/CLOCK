@@ -9,6 +9,16 @@ type Tab = "clock" | "counter" | "progress";
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("clock");
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+
+  function handleBackgroundChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const objectUrl = URL.createObjectURL(file);
+    console.log("Background URL set:", objectUrl);
+    setBackgroundUrl(objectUrl);
+  }
 
   const title = useMemo(() => {
     if (tab === "clock") return "Clock";
@@ -17,11 +27,11 @@ export default function Home() {
   }, [tab]);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="p-6 border-b bg-white">
+    <main className="min-h-screen text-slate-900">
+      <header className="p-6 border-b bg-white/80 backdrop-blur flex flex-col gap-4 relative z-20">
         <h1 className="text-2xl font-bold">{title}</h1>
 
-        <div className="mt-4 flex gap-2">
+        <div className="flex gap-2">
           <button
             className={`px-3 py-2 rounded border ${
               tab === "clock" ? "bg-slate-900 text-white" : "bg-white"
@@ -49,10 +59,23 @@ export default function Home() {
             Progress
           </button>
         </div>
+
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="font-medium">Background image:</label>
+          <label className="px-2 py-1 text-xs rounded border bg-slate-900 text-white cursor-pointer hover:bg-slate-800 transition">
+            Choose File
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleBackgroundChange}
+              className="hidden"
+            />
+          </label>
+        </div>
       </header>
 
       <section className="p-6">
-        {tab === "clock" && <ClockPanel />}
+        {tab === "clock" && <ClockPanel backgroundUrl={backgroundUrl} />}
         {tab === "counter" && <CounterPanel />}
         {tab === "progress" && <ProgressPanel />}
       </section>
