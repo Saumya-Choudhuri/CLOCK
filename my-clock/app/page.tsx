@@ -57,7 +57,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <header className="p-6 border-b bg-slate-900/95 backdrop-blur flex flex-col gap-4 relative z-20 border-slate-800">
-        <h1 className="text-4xl font-black text-center" style={{ background: 'linear-gradient(135deg, #FFEDDF, #FFD4B8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: '900', opacity: '0.75' }}>THE CLOCK</h1>
+        <h1 className="text-4xl font-black text-center text-white" style={{ fontWeight: '900', opacity: '0.75' }}>THE CLOCK</h1>
 
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
@@ -90,7 +90,7 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-2 text-sm text-slate-400">
-            <label className="font-medium">Background image:</label>
+            <label className="font-medium">Background:</label>
             <label className="px-2 py-1 text-xs rounded border bg-[#FFEDDF] text-slate-900 cursor-pointer hover:bg-orange-100 transition">
               Choose File
               <input

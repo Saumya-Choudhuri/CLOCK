@@ -297,7 +297,7 @@ export default function CounterPanel({
                 </button>
               )}
 
-              <button className="px-6 py-3 rounded border bg-white font-medium" onClick={reset}>
+              <button className="px-6 py-3 rounded border bg-red-600/60 border-red-500 text-white font-medium hover:bg-red-600/80 transition" onClick={reset}>
                 Reset
               </button>
             </div>
