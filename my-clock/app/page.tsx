@@ -14,6 +14,12 @@ export default function Home() {
   const [overlayOpacity, setOverlayOpacity] = useState(0.6);
   const [backgroundOpacity, setBackgroundOpacity] = useState(0.6);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  
+  // Progress tracking
+  const [currentProgressTask, setCurrentProgressTask] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   function handleBackgroundChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -127,9 +133,33 @@ export default function Home() {
             onOpacityChange={setOverlayOpacity}
             onBackgroundOpacityChange={setBackgroundOpacity}
             onThemeChange={setTheme}
+            currentProgressTask={currentProgressTask}
+            onTaskSessionComplete={(duration) => {
+              if (currentProgressTask) {
+                window.localStorage.setItem(
+                  "pending_session",
+                  JSON.stringify({
+                    taskId: currentProgressTask.id,
+                    duration,
+                  })
+                );
+              }
+            }}
           />
         )}
-        {tab === "progress" && <ProgressPanel />}
+        {tab === "progress" && (
+          <ProgressPanel
+            onStartTask={(taskId, taskName) => {
+              setCurrentProgressTask({ id: taskId, name: taskName });
+              setTab("counter");
+            }}
+            onTaskSessionComplete={(taskId, duration) => {
+              // This will be called when counter session completes
+            }}
+            currentProgressTask={currentProgressTask}
+            onClearCurrentTask={() => setCurrentProgressTask(null)}
+          />
+        )}
       </section>
     </main>
   );

@@ -24,6 +24,8 @@ interface CounterPanelProps {
   onOpacityChange?: (opacity: number) => void;
   onBackgroundOpacityChange?: (opacity: number) => void;
   onThemeChange?: (theme: "light" | "dark") => void;
+  currentProgressTask?: { id: string; name: string } | null;
+  onTaskSessionComplete?: (duration: number) => void;
 }
 
 export default function CounterPanel({
@@ -35,6 +37,8 @@ export default function CounterPanel({
   onOpacityChange,
   onBackgroundOpacityChange,
   onThemeChange,
+  currentProgressTask,
+  onTaskSessionComplete,
 }: CounterPanelProps) {
   const [preCount, setPreCount] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
@@ -105,6 +109,11 @@ export default function CounterPanel({
     setRunning(false);
     clearTick();
     startTsRef.current = null;
+    
+    // Save session to progress if tracking a task
+    if (currentProgressTask && elapsedMs > 0 && onTaskSessionComplete) {
+      onTaskSessionComplete(elapsedMs);
+    }
   };
 
   const reset = () => {
@@ -270,6 +279,12 @@ export default function CounterPanel({
           }}
         >
           <div className="text-center">
+            {currentProgressTask && (
+              <div className="text-sm text-slate-300 mb-4">
+                Tracking: <span className="text-white font-semibold">{currentProgressTask.name}</span>
+              </div>
+            )}
+            
             {preCount != null ? (
               <div className="text-7xl font-bold" style={{ color: theme === "light" ? "#ffffff" : "#0f172a" }}>
                 {preCount}

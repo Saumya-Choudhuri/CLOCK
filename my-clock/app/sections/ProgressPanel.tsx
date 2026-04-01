@@ -16,7 +16,19 @@ interface Task {
   currentSessionStart: number | null;
 }
 
-export default function ProgressPanel() {
+interface ProgressPanelProps {
+  onStartTask?: (taskId: string, taskName: string) => void;
+  onTaskSessionComplete?: (taskId: string, duration: number) => void;
+  currentProgressTask?: { id: string; name: string } | null;
+  onClearCurrentTask?: () => void;
+}
+
+export default function ProgressPanel({
+  onStartTask,
+  onTaskSessionComplete,
+  currentProgressTask,
+  onClearCurrentTask,
+}: ProgressPanelProps) {
   const [userName, setUserName] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showNameInput, setShowNameInput] = useState(true);
@@ -33,6 +45,20 @@ export default function ProgressPanel() {
       setShowNameInput(!data.userName);
     }
   }, []);
+
+  // Check for pending sessions from Counter
+  useEffect(() => {
+    if (isMounted && currentProgressTask) {
+      const pending = window.localStorage.getItem("pending_session");
+      if (pending) {
+        const { taskId, duration } = JSON.parse(pending);
+        if (taskId === currentProgressTask.id) {
+          addSessionToTask(taskId, duration);
+          window.localStorage.removeItem("pending_session");
+        }
+      }
+    }
+  }, [isMounted, currentProgressTask]);
 
   // Save to localStorage
   useEffect(() => {
@@ -69,17 +95,10 @@ export default function ProgressPanel() {
   };
 
   const handleStartTask = (id: string) => {
-    setTasks(
-      tasks.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              isRunning: true,
-              currentSessionStart: Date.now(),
-            }
-          : t
-      )
-    );
+    const task = tasks.find((t) => t.id === id);
+    if (task && onStartTask) {
+      onStartTask(id, task.name);
+    }
   };
 
   const handleStopTask = (id: string) => {
@@ -126,6 +145,27 @@ export default function ProgressPanel() {
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hours}h ${minutes}m ${secs}s`;
+  };
+
+  const addSessionToTask = (taskId: string, duration: number) => {
+    const endTime = Date.now();
+    setTasks(
+      tasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              sessions: [
+                ...t.sessions,
+                {
+                  startTime: endTime - duration,
+                  endTime: endTime,
+                  duration,
+                },
+              ],
+            }
+          : t
+      )
+    );
   };
 
   const getMonthlyStats = () => {
