@@ -8,10 +8,18 @@ interface TaskSession {
   duration: number;
 }
 
+interface TaskNote {
+  id: string;
+  description: string;
+  duration: number;
+  createdAt: number;
+}
+
 interface Task {
   id: string;
   name: string;
   sessions: TaskSession[];
+  notes: TaskNote[];
   isRunning: boolean;
   currentSessionStart: number | null;
 }
@@ -19,6 +27,7 @@ interface Task {
 interface ProgressPanelProps {
   onStartTask?: (taskId: string, taskName: string) => void;
   onTaskSessionComplete?: (taskId: string, duration: number) => void;
+  onAddTaskNote?: (taskId: string, note: TaskNote) => void;
   currentProgressTask?: { id: string; name: string } | null;
   onClearCurrentTask?: () => void;
 }
@@ -26,6 +35,7 @@ interface ProgressPanelProps {
 export default function ProgressPanel({
   onStartTask,
   onTaskSessionComplete,
+  onAddTaskNote,
   currentProgressTask,
   onClearCurrentTask,
 }: ProgressPanelProps) {
@@ -41,7 +51,12 @@ export default function ProgressPanel({
     if (saved) {
       const data = JSON.parse(saved);
       setUserName(data.userName || "");
-      setTasks(data.tasks || []);
+      // Ensure all tasks have notes property (migration for old data)
+      const migratedTasks = (data.tasks || []).map((task: Task) => ({
+        ...task,
+        notes: task.notes || [],
+      }));
+      setTasks(migratedTasks);
       setShowNameInput(!data.userName);
     }
   }, []);
@@ -55,6 +70,20 @@ export default function ProgressPanel({
         if (taskId === currentProgressTask.id) {
           addSessionToTask(taskId, duration);
           window.localStorage.removeItem("pending_session");
+        }
+      }
+    }
+  }, [isMounted, currentProgressTask]);
+
+  // Check for pending notes from Counter
+  useEffect(() => {
+    if (isMounted && currentProgressTask) {
+      const pending = window.localStorage.getItem("pending_note");
+      if (pending) {
+        const { taskId, note } = JSON.parse(pending);
+        if (taskId === currentProgressTask.id) {
+          handleAddNote(taskId, note);
+          window.localStorage.removeItem("pending_note");
         }
       }
     }
@@ -83,6 +112,7 @@ export default function ProgressPanel({
         id: Date.now().toString(),
         name: `Task ${tasks.length + 1}`,
         sessions: [],
+        notes: [],
         isRunning: false,
         currentSessionStart: null,
       };
@@ -162,6 +192,35 @@ export default function ProgressPanel({
                   duration,
                 },
               ],
+            }
+          : t
+      )
+    );
+  };
+
+  const handleAddNote = (taskId: string, note: TaskNote) => {
+    setTasks(
+      tasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              notes: [...t.notes, note],
+            }
+          : t
+      )
+    );
+    if (onAddTaskNote) {
+      onAddTaskNote(taskId, note);
+    }
+  };
+
+  const handleDeleteNote = (taskId: string, noteId: string) => {
+    setTasks(
+      tasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              notes: t.notes.filter((n) => n.id !== noteId),
             }
           : t
       )
@@ -327,6 +386,37 @@ export default function ProgressPanel({
                                 )
                               }
                               className="text-xs bg-red-600/40 px-2 py-1 rounded hover:bg-red-600/60"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {task.notes.length > 0 && (
+                    <div className="mt-3 space-y-2 text-sm">
+                      <p className="text-slate-300 font-medium">Notes:</p>
+                      {task.notes.slice(-3).map((note) => {
+                        const duration = note.duration / 1000;
+                        const hours = Math.floor(duration / 3600);
+                        const minutes = Math.floor((duration % 3600) / 60);
+                        const secs = Math.floor(duration % 60);
+                        return (
+                          <div
+                            key={note.id}
+                            className="flex items-center justify-between bg-blue-900/50 p-2 rounded text-slate-300 border border-blue-700/50"
+                          >
+                            <div className="flex-1">
+                              <span className="text-white font-medium">{note.description}</span>
+                              <span className="ml-2 text-slate-400">
+                                {hours}h {minutes}m {secs}s
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteNote(task.id, note.id)}
+                              className="text-xs bg-red-600/40 px-2 py-1 rounded hover:bg-red-600/60 ml-2"
                             >
                               Delete
                             </button>

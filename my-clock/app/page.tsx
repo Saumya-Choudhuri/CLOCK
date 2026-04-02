@@ -145,6 +145,22 @@ export default function Home() {
                 );
               }
             }}
+            onAddNote={(note) => {
+              if (currentProgressTask) {
+                window.localStorage.setItem(
+                  "pending_note",
+                  JSON.stringify({
+                    taskId: currentProgressTask.id,
+                    note: {
+                      id: Date.now().toString(),
+                      description: note.description,
+                      duration: note.duration,
+                      createdAt: Date.now(),
+                    },
+                  })
+                );
+              }
+            }}
           />
         )}
         {tab === "progress" && (
@@ -155,6 +171,10 @@ export default function Home() {
             }}
             onTaskSessionComplete={(taskId, duration) => {
               // This will be called when counter session completes
+            }}
+            onAddTaskNote={(taskId, note) => {
+              // Note has been added to the task
+              console.log("Note added to task:", taskId, note);
             }}
             currentProgressTask={currentProgressTask}
             onClearCurrentTask={() => setCurrentProgressTask(null)}

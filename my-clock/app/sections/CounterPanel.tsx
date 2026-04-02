@@ -26,6 +26,7 @@ interface CounterPanelProps {
   onThemeChange?: (theme: "light" | "dark") => void;
   currentProgressTask?: { id: string; name: string } | null;
   onTaskSessionComplete?: (duration: number) => void;
+  onAddNote?: (note: { description: string; duration: number }) => void;
 }
 
 export default function CounterPanel({
@@ -39,6 +40,7 @@ export default function CounterPanel({
   onThemeChange,
   currentProgressTask,
   onTaskSessionComplete,
+  onAddNote,
 }: CounterPanelProps) {
   const [preCount, setPreCount] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
@@ -46,6 +48,9 @@ export default function CounterPanel({
   const [isMounted, setIsMounted] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteDescription, setNoteDescription] = useState("");
+  const [noteDuration, setNoteDuration] = useState<number>(0);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTsRef = useRef<number | null>(null);
@@ -120,6 +125,24 @@ export default function CounterPanel({
     stop();
     setElapsedMs(0);
     setPreCount(null);
+  };
+
+  const handleAddNote = () => {
+    if (noteDescription.trim() && onAddNote) {
+      onAddNote({
+        description: noteDescription,
+        duration: noteDuration,
+      });
+      setNoteDescription("");
+      setNoteDuration(0);
+      setShowNoteModal(false);
+    }
+  };
+
+  const handleNoteModalOpenAndSetDefault = () => {
+    // Set duration to current elapsed time by default
+    setNoteDuration(elapsedMs);
+    setShowNoteModal(true);
   };
 
   const startTimerNow = () => {
@@ -315,10 +338,65 @@ export default function CounterPanel({
               <button className="px-6 py-3 rounded border bg-red-600/60 border-red-500 text-white font-medium hover:bg-red-600/80 transition" onClick={reset}>
                 Reset
               </button>
+
+              {currentProgressTask && (
+                <button 
+                  className="px-6 py-3 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+                  onClick={handleNoteModalOpenAndSetDefault}
+                >
+                  Note
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Note Modal */}
+      {showNoteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6 max-w-md w-full space-y-4">
+            <h2 className="text-xl font-bold text-white">Add a Note</h2>
+            
+            <div className="space-y-2">
+              <label className="block text-sm text-slate-300">Note Description</label>
+              <input
+                type="text"
+                placeholder="e.g., Worked on feature X, Attended meeting"
+                value={noteDescription}
+                onChange={(e) => setNoteDescription(e.target.value)}
+                className="w-full px-3 py-2 rounded bg-slate-700 text-white placeholder-slate-500 border border-slate-600 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm text-slate-300">Time Spent (from counter)</label>
+              <div className="flex gap-2 items-center px-3 py-2 rounded bg-slate-700 border border-slate-600">
+                <span className="text-lg font-mono text-white">{formatMs(elapsedMs)}</span>
+              </div>
+              <p className="text-xs text-slate-400">
+                This time will be recorded with your note
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <button
+                onClick={() => setShowNoteModal(false)}
+                className="flex-1 px-4 py-2 rounded bg-slate-700 text-white hover:bg-slate-600 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddNote}
+                disabled={!noteDescription.trim()}
+                className="flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
