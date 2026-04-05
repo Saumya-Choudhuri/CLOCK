@@ -15,6 +15,28 @@ function formatMs(ms: number) {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
+interface TaskSession {
+  startTime: number;
+  endTime: number | null;
+  duration: number;
+}
+
+interface TaskNote {
+  id: string;
+  description: string;
+  duration: number;
+  createdAt: number;
+}
+
+interface Task {
+  id: string;
+  name: string;
+  sessions: TaskSession[];
+  notes: TaskNote[];
+  isRunning: boolean;
+  currentSessionStart: number | null;
+}
+
 interface CounterPanelProps {
   backgroundUrl?: string | null;
   backgroundType?: "image" | "video" | null;
@@ -27,6 +49,7 @@ interface CounterPanelProps {
   currentProgressTask?: { id: string; name: string } | null;
   onTaskSessionComplete?: (duration: number) => void;
   onAddNote?: (note: { description: string; duration: number }) => void;
+  isActive?: boolean;
 }
 
 export default function CounterPanel({
@@ -41,6 +64,7 @@ export default function CounterPanel({
   currentProgressTask,
   onTaskSessionComplete,
   onAddNote,
+  isActive = true,
 }: CounterPanelProps) {
   const [preCount, setPreCount] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
@@ -51,15 +75,70 @@ export default function CounterPanel({
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteDescription, setNoteDescription] = useState("");
   const [noteDuration, setNoteDuration] = useState<number>(0);
+  const [wasRunningBeforeNote, setWasRunningBeforeNote] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState<string>("");
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTsRef = useRef<number | null>(null);
   const timerRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wasRunningBeforeSwitchRef = useRef(false);
 
   useEffect(() => {
     setIsMounted(true);
+    // Load counter state from localStorage on mount
+    const saved = window.localStorage.getItem("counter_state");
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        setElapsedMs(data.elapsedMs || 0);
+        wasRunningBeforeSwitchRef.current = data.wasRunning || false;
+      } catch (e) {
+        console.error("Failed to load counter state", e);
+      }
+    }
+    
+    // Load tasks from localStorage
+    const taskData = window.localStorage.getItem("progress_data");
+    if (taskData) {
+      try {
+        const data = JSON.parse(taskData);
+        const loadedTasks = (data.tasks || []).map((task: Task) => ({
+          ...task,
+          notes: task.notes || [],
+        }));
+        setTasks(loadedTasks);
+        if (loadedTasks.length > 0 && !selectedTaskId) {
+          setSelectedTaskId(loadedTasks[0].id);
+        }
+      } catch (e) {
+        console.error("Failed to load tasks", e);
+      }
+    }
   }, []);
+
+  // Save counter state to localStorage
+  useEffect(() => {
+    if (isMounted) {
+      window.localStorage.setItem(
+        "counter_state",
+        JSON.stringify({
+          elapsedMs,
+          wasRunning: wasRunningBeforeSwitchRef.current || running,
+        })
+      );
+    }
+  }, [elapsedMs, running, isMounted]);
+
+  // Handle pause when switching tabs
+  useEffect(() => {
+    if (!isActive && running) {
+      wasRunningBeforeSwitchRef.current = true;
+      clearTick();
+      setRunning(false);
+    }
+  }, [isActive, running]);
 
   const handleMouseMove = () => {
     setShowControls(true);
@@ -125,24 +204,81 @@ export default function CounterPanel({
     stop();
     setElapsedMs(0);
     setPreCount(null);
+    // Clear counter state from localStorage on reset
+    window.localStorage.removeItem("counter_state");
   };
 
   const handleAddNote = () => {
-    if (noteDescription.trim() && onAddNote) {
-      onAddNote({
-        description: noteDescription,
-        duration: noteDuration,
+    if (noteDescription.trim() && selectedTaskId) {
+      // Add note to the selected task
+      const updatedTasks = tasks.map((task) => {
+        if (task.id === selectedTaskId) {
+          return {
+            ...task,
+            notes: [
+              ...task.notes,
+              {
+                id: Date.now().toString(),
+                description: noteDescription,
+                duration: noteDuration,
+                createdAt: Date.now(),
+              },
+            ],
+          };
+        }
+        return task;
       });
+      
+      setTasks(updatedTasks);
+      
+      // Save to localStorage
+      window.localStorage.setItem(
+        "progress_data",
+        JSON.stringify({ tasks: updatedTasks })
+      );
+      
       setNoteDescription("");
       setNoteDuration(0);
       setShowNoteModal(false);
+      // Resume timer if it was running before
+      if (wasRunningBeforeNote) {
+        setRunning(true);
+        startTsRef.current = Date.now() - elapsedMs;
+        clearTick();
+        intervalRef.current = setInterval(() => {
+          if (startTsRef.current == null) return;
+          setElapsedMs(Date.now() - startTsRef.current);
+        }, 250);
+      }
     }
   };
 
   const handleNoteModalOpenAndSetDefault = () => {
+    // Pause timer if it's running
+    setWasRunningBeforeNote(running);
+    if (running) {
+      clearTick();
+      setRunning(false);
+    }
     // Set duration to current elapsed time by default
     setNoteDuration(elapsedMs);
     setShowNoteModal(true);
+  };
+
+  const handleNoteModalClose = () => {
+    setShowNoteModal(false);
+    setNoteDescription("");
+    setNoteDuration(0);
+    // Resume timer if it was running before
+    if (wasRunningBeforeNote) {
+      setRunning(true);
+      startTsRef.current = Date.now() - elapsedMs;
+      clearTick();
+      intervalRef.current = setInterval(() => {
+        if (startTsRef.current == null) return;
+        setElapsedMs(Date.now() - startTsRef.current);
+      }, 250);
+    }
   };
 
   const startTimerNow = () => {
@@ -358,42 +494,66 @@ export default function CounterPanel({
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-6 max-w-md w-full space-y-4">
             <h2 className="text-xl font-bold text-white">Add a Note</h2>
             
-            <div className="space-y-2">
-              <label className="block text-sm text-slate-300">Note Description</label>
-              <input
-                type="text"
-                placeholder="e.g., Worked on feature X, Attended meeting"
-                value={noteDescription}
-                onChange={(e) => setNoteDescription(e.target.value)}
-                className="w-full px-3 py-2 rounded bg-slate-700 text-white placeholder-slate-500 border border-slate-600 focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm text-slate-300">Time Spent (from counter)</label>
-              <div className="flex gap-2 items-center px-3 py-2 rounded bg-slate-700 border border-slate-600">
-                <span className="text-lg font-mono text-white">{formatMs(elapsedMs)}</span>
+            {tasks.length === 0 ? (
+              <div className="bg-yellow-900/30 border border-yellow-700 rounded p-3 text-sm text-yellow-200">
+                No tasks available. Create a task in the Tasks section first.
               </div>
-              <p className="text-xs text-slate-400">
-                This time will be recorded with your note
-              </p>
-            </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="block text-sm text-slate-300">Select Task</label>
+                  <select
+                    value={selectedTaskId}
+                    onChange={(e) => setSelectedTaskId(e.target.value)}
+                    className="w-full px-3 py-2 rounded bg-slate-700 text-white border border-slate-600 focus:border-blue-500 focus:outline-none"
+                  >
+                    {tasks.map((task) => (
+                      <option key={task.id} value={task.id}>
+                        {task.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="flex gap-2 pt-4">
-              <button
-                onClick={() => setShowNoteModal(false)}
-                className="flex-1 px-4 py-2 rounded bg-slate-700 text-white hover:bg-slate-600 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddNote}
-                disabled={!noteDescription.trim()}
-                className="flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add Note
-              </button>
-            </div>
+                <div className="space-y-2">
+                  <label className="block text-sm text-slate-300">Note Description</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Worked on feature X, Attended meeting"
+                    value={noteDescription}
+                    onChange={(e) => setNoteDescription(e.target.value)}
+                    className="w-full px-3 py-2 rounded bg-slate-700 text-white placeholder-slate-500 border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm text-slate-300">Time Spent (from counter)</label>
+                  <div className="flex gap-2 items-center px-3 py-2 rounded bg-slate-700 border border-slate-600">
+                    <span className="text-lg font-mono text-white">{formatMs(elapsedMs)}</span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Timer is paused while adding a note
+                  </p>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <button
+                    onClick={handleNoteModalClose}
+                    className="flex-1 px-4 py-2 rounded bg-slate-700 text-white hover:bg-slate-600 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddNote}
+                    disabled={!noteDescription.trim() || !selectedTaskId}
+                    className="flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add Note
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

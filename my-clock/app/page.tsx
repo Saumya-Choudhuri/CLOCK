@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import ClockPanel from "./sections/ClockPanel";
 import CounterPanel from "./sections/CounterPanel";
-import ProgressPanel from "./sections/ProgressPanel";
+import AnalyticsPanel from "./sections/AnalyticsPanel";
+import TasksPanel from "./sections/TasksPanel";
 
-type Tab = "clock" | "counter" | "progress";
+type Tab = "clock" | "counter" | "analytics" | "tasks";
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("clock");
@@ -87,11 +88,20 @@ export default function Home() {
 
             <button
               className={`px-2 py-1 text-sm rounded border ${
-                tab === "progress" ? "bg-[#FFEDDF] text-slate-900" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
+                tab === "tasks" ? "bg-[#FFEDDF] text-slate-900" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
               }`}
-              onClick={() => setTab("progress")}
+              onClick={() => setTab("tasks")}
             >
-              Progress
+              Tasks
+            </button>
+
+            <button
+              className={`px-2 py-1 text-sm rounded border ${
+                tab === "analytics" ? "bg-[#FFEDDF] text-slate-900" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
+              }`}
+              onClick={() => setTab("analytics")}
+            >
+              Analytics
             </button>
           </div>
           
@@ -161,24 +171,14 @@ export default function Home() {
                 );
               }
             }}
+            isActive={tab === "counter"}
           />
         )}
-        {tab === "progress" && (
-          <ProgressPanel
-            onStartTask={(taskId, taskName) => {
-              setCurrentProgressTask({ id: taskId, name: taskName });
-              setTab("counter");
-            }}
-            onTaskSessionComplete={(taskId, duration) => {
-              // This will be called when counter session completes
-            }}
-            onAddTaskNote={(taskId, note) => {
-              // Note has been added to the task
-              console.log("Note added to task:", taskId, note);
-            }}
-            currentProgressTask={currentProgressTask}
-            onClearCurrentTask={() => setCurrentProgressTask(null)}
-          />
+        {tab === "analytics" && (
+          <AnalyticsPanel />
+        )}
+        {tab === "tasks" && (
+          <TasksPanel />
         )}
       </section>
     </main>
