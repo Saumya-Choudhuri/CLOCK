@@ -68,30 +68,49 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
   // Load from localStorage
   useEffect(() => {
     setIsMounted(true);
-    const saved = window.localStorage.getItem("progress_data");
-    if (saved) {
-      const data = JSON.parse(saved);
-      const migratedTasks = (data.tasks || []).map((task: Task) => ({
-        ...task,
-        notes: task.notes || [],
-      }));
-      setTasks(migratedTasks);
-    }
+    let lastDataStr = "";
+    
+    const loadTasks = () => {
+      const saved = window.localStorage.getItem("progress_data");
+      if (saved) {
+        // Only update if data has actually changed
+        if (saved !== lastDataStr) {
+          lastDataStr = saved;
+          const data = JSON.parse(saved);
+          const migratedTasks = (data.tasks || []).map((task: Task) => ({
+            ...task,
+            notes: task.notes || [],
+          }));
+          setTasks(migratedTasks);
+        }
+      }
+    };
+
+    loadTasks();
+
+    // Poll localStorage for changes (less frequently to reduce re-renders)
+    const interval = setInterval(loadTasks, 1000);
+
+    // Listen for storage changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "progress_data") {
+        loadTasks();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
-  // Save tasks to localStorage
-  useEffect(() => {
-    if (isMounted) {
-      window.localStorage.setItem(
-        "progress_data",
-        JSON.stringify({ tasks })
-      );
-    }
-  }, [tasks, isMounted]);
-
-  // Calculate total duration for a task
+  // Calculate total duration for a task (including both sessions and notes)
   const calculateTaskDuration = (task: Task): number => {
-    return task.sessions.reduce((sum, session) => sum + session.duration, 0);
+    const sessionDuration = task.sessions.reduce((sum, session) => sum + session.duration, 0);
+    const notesDuration = task.notes.reduce((sum, note) => sum + note.duration, 0);
+    return sessionDuration + notesDuration;
   };
 
   // Format milliseconds to hours and minutes and seconds
@@ -132,6 +151,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     return tasks.map((task) => ({
       ...task,
       sessions: task.sessions.filter((session) => session.startTime >= cutoff),
+      notes: task.notes.filter((note) => note.createdAt >= cutoff),
     }));
   };
 
@@ -166,6 +186,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     const dailyData: Record<string, Record<string, number>> = {};
 
     filteredTasks.forEach((task) => {
+      // Include sessions
       task.sessions.forEach((session) => {
         const date = new Date(session.startTime).toLocaleDateString("en-US", {
           month: "short",
@@ -177,6 +198,20 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
         }
 
         dailyData[date][task.name] = (dailyData[date][task.name] || 0) + formatToHours(session.duration);
+      });
+
+      // Include notes
+      task.notes.forEach((note) => {
+        const date = new Date(note.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+
+        if (!dailyData[date]) {
+          dailyData[date] = {};
+        }
+
+        dailyData[date][task.name] = (dailyData[date][task.name] || 0) + formatToHours(note.duration);
       });
     });
 
@@ -373,15 +408,21 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
           </div>
         )}
 
-        {/* Chart Section */}
+          {/* Chart Section */}
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6">
-          <h3 className="text-xl font-bold text-white mb-6">
+          <h3 className="text-xl font-bold text-white mb-2">
             {chartType === "pie"
               ? "Time Distribution"
               : chartType === "bar"
                 ? "Tasks by Duration"
                 : "Daily Progress"}
           </h3>
+          <p className="text-xs text-slate-400 mb-6">
+            Period: {timePeriod === "daily" ? "Last 24 Hours" : timePeriod === "weekly" ? "Last 7 Days" : timePeriod === "monthly" ? "Last 30 Days" : "All Time"} | 
+            Tasks with data: {getFilteredTasks().filter((t) => calculateTaskDuration(t) > 0).length} | 
+            Total sessions: {getFilteredTasks().reduce((sum, t) => sum + t.sessions.length, 0)} | 
+            Total notes: {getFilteredTasks().reduce((sum, t) => sum + t.notes.length, 0)}
+          </p>
 
           {pieData.length === 0 && barData.length === 0 && lineData.length === 0 ? (
             <div className="flex items-center justify-center h-80 text-slate-400">
@@ -399,7 +440,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}h`}
+                    label={({ name, value }) => `${name}: ${value.toFixed(2)}h`}
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="value"
@@ -409,7 +450,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => `${value}h`}
+                    formatter={(value: number) => `${value.toFixed(2)}h`}
                     contentStyle={{
                       backgroundColor: "#1e293b",
                       border: "1px solid #475569",
@@ -420,7 +461,6 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                   <Legend
                     verticalAlign="bottom"
                     height={36}
-                    formatter={() => ""}
                   />
                 </PieChart>
               ) : chartType === "bar" && barData.length > 0 ? (
@@ -462,17 +502,19 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                     }}
                   />
                   <Legend />
-                  {tasks.map((task, index) => (
-                    <Line
-                      key={task.id}
-                      type="monotone"
-                      dataKey={task.name}
-                      stroke={COLORS[index % COLORS.length]}
-                      strokeWidth={2}
-                      dot={{ fill: COLORS[index % COLORS.length], r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  ))}
+                  {getFilteredTasks()
+                    .filter((task) => calculateTaskDuration(task) > 0)
+                    .map((task, index) => (
+                      <Line
+                        key={task.id}
+                        type="monotone"
+                        dataKey={task.name}
+                        stroke={COLORS[index % COLORS.length]}
+                        strokeWidth={2}
+                        dot={{ fill: COLORS[index % COLORS.length], r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    ))}
                 </LineChart>
               ) : null}
             </ResponsiveContainer>

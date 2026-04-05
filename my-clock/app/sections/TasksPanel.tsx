@@ -32,24 +32,30 @@ export default function TasksPanel() {
   // Load from localStorage
   useEffect(() => {
     setIsMounted(true);
+    let lastDataStr = "";
+
     const loadTasks = () => {
       const saved = window.localStorage.getItem("progress_data");
       if (saved) {
-        const data = JSON.parse(saved);
-        const migratedTasks = (data.tasks || []).map((task: Task) => ({
-          ...task,
-          notes: task.notes || [],
-        }));
-        setTasks(migratedTasks);
+        // Only update if data has actually changed
+        if (saved !== lastDataStr) {
+          lastDataStr = saved;
+          const data = JSON.parse(saved);
+          const migratedTasks = (data.tasks || []).map((task: Task) => ({
+            ...task,
+            notes: task.notes || [],
+          }));
+          setTasks(migratedTasks);
+        }
       }
     };
 
     loadTasks();
 
-    // Poll localStorage for changes from other sections
+    // Poll localStorage for changes from other sections (less frequently)
     const interval = setInterval(() => {
       loadTasks();
-    }, 500);
+    }, 1000);
 
     // Listen for storage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {

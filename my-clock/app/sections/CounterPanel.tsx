@@ -87,6 +87,7 @@ export default function CounterPanel({
 
   useEffect(() => {
     setIsMounted(true);
+    
     // Load counter state from localStorage on mount
     const saved = window.localStorage.getItem("counter_state");
     if (saved) {
@@ -98,24 +99,55 @@ export default function CounterPanel({
         console.error("Failed to load counter state", e);
       }
     }
-    
-    // Load tasks from localStorage
-    const taskData = window.localStorage.getItem("progress_data");
-    if (taskData) {
-      try {
-        const data = JSON.parse(taskData);
-        const loadedTasks = (data.tasks || []).map((task: Task) => ({
-          ...task,
-          notes: task.notes || [],
-        }));
-        setTasks(loadedTasks);
-        if (loadedTasks.length > 0 && !selectedTaskId) {
-          setSelectedTaskId(loadedTasks[0].id);
+  }, []);
+
+  // Load and poll tasks
+  useEffect(() => {
+    let lastDataStr = "";
+
+    const loadTasks = () => {
+      const taskData = window.localStorage.getItem("progress_data");
+      if (taskData) {
+        // Only update if data has actually changed
+        if (taskData !== lastDataStr) {
+          lastDataStr = taskData;
+          try {
+            const data = JSON.parse(taskData);
+            const loadedTasks = (data.tasks || []).map((task: Task) => ({
+              ...task,
+              notes: task.notes || [],
+            }));
+            setTasks(loadedTasks);
+            
+            // Ensure a task is selected
+            if (loadedTasks.length > 0) {
+              setSelectedTaskId((prevId) => prevId || loadedTasks[0].id);
+            }
+          } catch (e) {
+            console.error("Failed to load tasks", e);
+          }
         }
-      } catch (e) {
-        console.error("Failed to load tasks", e);
       }
-    }
+    };
+
+    loadTasks();
+
+    // Poll for task updates from other sections (less frequently)
+    const interval = setInterval(loadTasks, 1000);
+
+    // Listen for storage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "progress_data") {
+        loadTasks();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   // Save counter state to localStorage
@@ -194,7 +226,38 @@ export default function CounterPanel({
     clearTick();
     startTsRef.current = null;
     
-    // Save session to progress if tracking a task
+    // Save session to the selected task if time elapsed
+    if (selectedTaskId && elapsedMs > 0) {
+      const updatedTasks = tasks.map((task) => {
+        if (task.id === selectedTaskId) {
+          return {
+            ...task,
+            sessions: [
+              ...task.sessions,
+              {
+                startTime: Date.now() - elapsedMs,
+                endTime: Date.now(),
+                duration: elapsedMs,
+              },
+            ],
+          };
+        }
+        return task;
+      });
+      
+      setTasks(updatedTasks);
+      
+      // Save to localStorage
+      window.localStorage.setItem(
+        "progress_data",
+        JSON.stringify({ tasks: updatedTasks })
+      );
+
+      // Reset the timer for next session
+      setElapsedMs(0);
+    }
+    
+    // Call callback if tracking a task via prop
     if (currentProgressTask && elapsedMs > 0 && onTaskSessionComplete) {
       onTaskSessionComplete(elapsedMs);
     }
@@ -438,9 +501,30 @@ export default function CounterPanel({
           }}
         >
           <div className="text-center">
+            {tasks.length === 0 ? (
+              <div className="text-sm text-slate-400 mb-4">
+                No tasks. Create one in the Tasks section.
+              </div>
+            ) : (
+              <div className="mb-4">
+                <select
+                  value={selectedTaskId}
+                  onChange={(e) => setSelectedTaskId(e.target.value)}
+                  className="appearance-none bg-transparent text-white text-sm cursor-pointer hover:opacity-80 transition"
+                  style={{ color: theme === "light" ? "#ffffff" : "#0f172a" }}
+                >
+                  {tasks.map((task) => (
+                    <option key={task.id} value={task.id} style={{ color: "#000" }}>
+                      {task.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {currentProgressTask && (
-              <div className="text-sm text-slate-300 mb-4">
-                Tracking: <span className="text-white font-semibold">{currentProgressTask.name}</span>
+              <div className="text-sm text-slate-300 mb-2">
+                Legacy: <span className="text-white font-semibold">{currentProgressTask.name}</span>
               </div>
             )}
             
@@ -475,7 +559,7 @@ export default function CounterPanel({
                 Reset
               </button>
 
-              {currentProgressTask && (
+              {selectedTaskId && tasks.length > 0 && (
                 <button 
                   className="px-6 py-3 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
                   onClick={handleNoteModalOpenAndSetDefault}
