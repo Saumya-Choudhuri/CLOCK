@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd my-clock && npm install && npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "my-clock/.next"
+}
