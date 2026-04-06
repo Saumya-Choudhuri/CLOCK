@@ -31,14 +31,11 @@ jobs:
         working-directory: ./my-clock
         run: npm run build
 
-      - name: Deploy to gh-pages
-        run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
-          git checkout --orphan gh-pages
-          git rm -rf .
-          cp -r my-clock/out/* .
-          git add .
-          git commit -m "Deploy to GitHub Pages [skip ci]"
-          git push origin gh-pages -f
+      - name: Deploy
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: gh-pages
+          build_dir: my-clock/out
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
