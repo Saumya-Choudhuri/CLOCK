@@ -27,22 +27,56 @@ interface Task {
 interface ProgressPanelProps {
   onStartTask?: (taskId: string, taskName: string) => void;
   onTaskSessionComplete?: (taskId: string, duration: number) => void;
-  onAddTaskNote?: (taskId: string, note: TaskNote) => void;
   currentProgressTask?: { id: string; name: string } | null;
-  onClearCurrentTask?: () => void;
 }
 
 export default function ProgressPanel({
   onStartTask,
   onTaskSessionComplete,
-  onAddTaskNote,
   currentProgressTask,
-  onClearCurrentTask,
 }: ProgressPanelProps) {
   const [userName, setUserName] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showNameInput, setShowNameInput] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+
+  // Declare functions before useEffect
+  const addSessionToTask = (taskId: string, duration: number) => {
+    const endTime = Date.now();
+    setTasks((prevTasks) =>
+      prevTasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              sessions: [
+                ...t.sessions,
+                {
+                  startTime: endTime - duration,
+                  endTime: endTime,
+                  duration,
+                },
+              ],
+            }
+          : t
+      )
+    );
+  };
+
+  const handleAddNote = (taskId: string, note: TaskNote) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              notes: [...t.notes, note],
+            }
+          : t
+      )
+    );
+    if (onTaskSessionComplete) {
+      onTaskSessionComplete(taskId, note.duration);
+    }
+  };
 
   // Load from localStorage
   useEffect(() => {
@@ -83,7 +117,7 @@ export default function ProgressPanel({
         }
       }
     }
-  }, [isMounted, currentProgressTask]);
+  }, [isMounted, currentProgressTask, addSessionToTask]);
 
   // Check for pending notes from Counter
   useEffect(() => {
@@ -102,7 +136,7 @@ export default function ProgressPanel({
         }
       }
     }
-  }, [isMounted, currentProgressTask]);
+  }, [isMounted, currentProgressTask, handleAddNote]);
 
   // Save to localStorage
   useEffect(() => {
@@ -190,43 +224,6 @@ export default function ProgressPanel({
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hours}h ${minutes}m ${secs}s`;
-  };
-
-  const addSessionToTask = (taskId: string, duration: number) => {
-    const endTime = Date.now();
-    setTasks(
-      tasks.map((t) =>
-        t.id === taskId
-          ? {
-              ...t,
-              sessions: [
-                ...t.sessions,
-                {
-                  startTime: endTime - duration,
-                  endTime: endTime,
-                  duration,
-                },
-              ],
-            }
-          : t
-      )
-    );
-  };
-
-  const handleAddNote = (taskId: string, note: TaskNote) => {
-    setTasks(
-      tasks.map((t) =>
-        t.id === taskId
-          ? {
-              ...t,
-              notes: [...t.notes, note],
-            }
-          : t
-      )
-    );
-    if (onAddTaskNote) {
-      onAddTaskNote(taskId, note);
-    }
   };
 
   const handleDeleteNote = (taskId: string, noteId: string) => {

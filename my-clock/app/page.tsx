@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import ClockPanel from "./sections/ClockPanel";
 import CounterPanel from "./sections/CounterPanel";
 import AnalyticsPanel from "./sections/AnalyticsPanel";
@@ -37,7 +37,9 @@ export default function Home() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("clock_overlay_opacity");
-      if (saved) setOverlayOpacity(Number(saved));
+      if (saved) {
+        setOverlayOpacity(Number(saved));
+      }
     } catch (error) {
       console.error("Failed to load overlay opacity:", error);
     }
@@ -54,7 +56,9 @@ export default function Home() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("clock_background_opacity");
-      if (saved) setBackgroundOpacity(Number(saved));
+      if (saved) {
+        setBackgroundOpacity(Number(saved));
+      }
     } catch (error) {
       console.error("Failed to load background opacity:", error);
     }
@@ -71,7 +75,9 @@ export default function Home() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("clock_theme");
-      if (saved) setTheme(saved as "light" | "dark");
+      if (saved) {
+        setTheme(saved as "light" | "dark");
+      }
     } catch (error) {
       console.error("Failed to load theme:", error);
     }
@@ -175,22 +181,6 @@ export default function Home() {
                   JSON.stringify({
                     taskId: currentProgressTask.id,
                     duration,
-                  })
-                );
-              }
-            }}
-            onAddNote={(note) => {
-              if (currentProgressTask) {
-                window.localStorage.setItem(
-                  "pending_note",
-                  JSON.stringify({
-                    taskId: currentProgressTask.id,
-                    note: {
-                      id: Date.now().toString(),
-                      description: note.description,
-                      duration: note.duration,
-                      createdAt: Date.now(),
-                    },
                   })
                 );
               }

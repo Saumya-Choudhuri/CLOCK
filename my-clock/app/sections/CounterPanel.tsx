@@ -48,7 +48,6 @@ interface CounterPanelProps {
   onThemeChange?: (theme: "light" | "dark") => void;
   currentProgressTask?: { id: string; name: string } | null;
   onTaskSessionComplete?: (duration: number) => void;
-  onAddNote?: (note: { description: string; duration: number }) => void;
   isActive?: boolean;
 }
 
@@ -63,7 +62,6 @@ export default function CounterPanel({
   onThemeChange,
   currentProgressTask,
   onTaskSessionComplete,
-  onAddNote,
   isActive = true,
 }: CounterPanelProps) {
   const [preCount, setPreCount] = useState<number | null>(null);
@@ -83,6 +81,12 @@ export default function CounterPanel({
   const timerRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const wasRunningBeforeSwitchRef = useRef(false);
+
+  // Declare functions before useEffect
+  const clearTick = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -169,7 +173,7 @@ export default function CounterPanel({
       clearTick();
       setRunning(false);
     }
-  }, [isActive, running]);
+  }, [isActive, running, clearTick]);
 
   const handleMouseMove = () => {
     setShowControls(true);
@@ -215,10 +219,7 @@ export default function CounterPanel({
     };
   }, []);
 
-  const clearTick = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = null;
-  };
+
 
   const stop = () => {
     setRunning(false);
@@ -369,7 +370,7 @@ export default function CounterPanel({
       1000
     );
     return () => clearTimeout(t);
-  }, [preCount]);
+  }, [preCount, isActive, running]);
 
   useEffect(() => {
     return () => clearTick();

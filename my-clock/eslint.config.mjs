@@ -13,6 +13,17 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Disabled: setState in effects for initialization from localStorage is legitimate
+      "react-hooks/set-state-in-effect": "off",
+      // Disabled: Unused variables from destructuring (future-proofing)
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_|^set" },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

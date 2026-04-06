@@ -26,14 +26,9 @@ export default function ClockPanel({
 }: ClockPanelProps) {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const timerRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const handleMouseMove = () => {
     setShowControls(true);
@@ -121,19 +116,17 @@ export default function ClockPanel({
 
         <div className="absolute top-4 right-4 z-10 flex flex-col gap-3 bg-slate-800/95 backdrop-blur p-4 rounded-lg border border-slate-700 transition-opacity duration-300" style={{ opacity: showControls ? 1 : 0, pointerEvents: showControls ? "auto" : "none" }}>
           <div className="flex gap-2 items-center">
-            {isMounted && (
-              <button
-                onClick={handleFullscreen}
-                className={`px-2 py-1 rounded text-xs border font-medium ${
-                  isFullscreen
-                    ? "bg-[#FFEDDF] text-slate-900"
-                    : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
-                }`}
-                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-              >
-                {isFullscreen ? "⛶ Exit FS" : "⛶ Enter FS"}
-              </button>
-            )}
+            <button
+              onClick={handleFullscreen}
+              className={`px-2 py-1 rounded text-xs border font-medium ${
+                isFullscreen
+                  ? "bg-[#FFEDDF] text-slate-900"
+                  : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
+              }`}
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? "⛶ Exit FS" : "⛶ Enter FS"}
+            </button>
           </div>
 
           <div className="flex gap-2 items-center">

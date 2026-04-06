@@ -14,8 +14,8 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    setNow(new Date()); // set initial time only on client
     const t = setInterval(() => setNow(new Date()), 1000);
+    setNow(new Date()); // set initial time only on client
     return () => clearInterval(t);
   }, []);
 

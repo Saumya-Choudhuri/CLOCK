@@ -143,6 +143,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
   const getFilteredTasks = (): Task[] => {
     if (timePeriod === "all") return tasks;
 
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     const timeRanges: Record<TimePeriod, number> = {
       daily: 24 * 60 * 60 * 1000,

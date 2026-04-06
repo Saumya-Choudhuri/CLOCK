@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 type IdleOptions = { timeoutMs?: number };
 const DEFAULT_TIMEOUT = 30_000;
 export function useIdleTimer({ timeoutMs = DEFAULT_TIMEOUT}: IdleOptions = {}){
     const [isIdle, setIsIdle] = useState(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
-    const reset = () => {
+    
+    const reset = useCallback(() => {
         if(timerRef.current) clearTimeout(timerRef.current);
         setIsIdle(false);
         timerRef.current = setTimeout(() => setIsIdle(true), timeoutMs);
+    }, [timeoutMs]);
 
-    };
     useEffect(() => {
         const onActivity = () => reset();
 
@@ -23,7 +24,7 @@ export function useIdleTimer({ timeoutMs = DEFAULT_TIMEOUT}: IdleOptions = {}){
             ["mousemove", "mousedown", "keydown", "touchstart"].forEach((event) => window.removeEventListener(event, onActivity));
             if(timerRef.current) clearTimeout(timerRef.current);
         };
-    }, [timeoutMs]);
+    }, [timeoutMs, reset]);
     return{isIdle, reset};
 
 }

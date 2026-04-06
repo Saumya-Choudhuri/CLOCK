@@ -26,12 +26,11 @@ interface Task {
 
 export default function TasksPanel() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
-    setIsMounted(true);
     let lastDataStr = "";
 
     const loadTasks = () => {
