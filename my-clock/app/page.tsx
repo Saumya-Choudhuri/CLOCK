@@ -35,30 +35,54 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("clock_overlay_opacity");
-    if (saved) setOverlayOpacity(Number(saved));
+    try {
+      const saved = window.localStorage.getItem("clock_overlay_opacity");
+      if (saved) setOverlayOpacity(Number(saved));
+    } catch (error) {
+      console.error("Failed to load overlay opacity:", error);
+    }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("clock_overlay_opacity", String(overlayOpacity));
+    try {
+      window.localStorage.setItem("clock_overlay_opacity", String(overlayOpacity));
+    } catch (error) {
+      console.error("Failed to save overlay opacity:", error);
+    }
   }, [overlayOpacity]);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("clock_background_opacity");
-    if (saved) setBackgroundOpacity(Number(saved));
+    try {
+      const saved = window.localStorage.getItem("clock_background_opacity");
+      if (saved) setBackgroundOpacity(Number(saved));
+    } catch (error) {
+      console.error("Failed to load background opacity:", error);
+    }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("clock_background_opacity", String(backgroundOpacity));
+    try {
+      window.localStorage.setItem("clock_background_opacity", String(backgroundOpacity));
+    } catch (error) {
+      console.error("Failed to save background opacity:", error);
+    }
   }, [backgroundOpacity]);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("clock_theme");
-    if (saved) setTheme(saved as "light" | "dark");
+    try {
+      const saved = window.localStorage.getItem("clock_theme");
+      if (saved) setTheme(saved as "light" | "dark");
+    } catch (error) {
+      console.error("Failed to load theme:", error);
+    }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("clock_theme", theme);
+    try {
+      window.localStorage.setItem("clock_theme", theme);
+    } catch (error) {
+      console.error("Failed to save theme:", error);
+    }
   }, [theme]);
 
   return (

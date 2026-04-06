@@ -37,15 +37,20 @@ export default function TasksPanel() {
     const loadTasks = () => {
       const saved = window.localStorage.getItem("progress_data");
       if (saved) {
-        // Only update if data has actually changed
-        if (saved !== lastDataStr) {
-          lastDataStr = saved;
-          const data = JSON.parse(saved);
-          const migratedTasks = (data.tasks || []).map((task: Task) => ({
-            ...task,
-            notes: task.notes || [],
-          }));
-          setTasks(migratedTasks);
+        try {
+          // Only update if data has actually changed
+          if (saved !== lastDataStr) {
+            lastDataStr = saved;
+            const data = JSON.parse(saved);
+            const migratedTasks = (data.tasks || []).map((task: Task) => ({
+              ...task,
+              notes: task.notes || [],
+            }));
+            setTasks(migratedTasks);
+          }
+        } catch (error) {
+          console.error("Failed to load progress data:", error);
+          window.localStorage.removeItem("progress_data");
         }
       }
     };
@@ -107,6 +112,20 @@ export default function TasksPanel() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Delete a note from a task
+  const handleDeleteNote = (taskId: string, noteId: string) => {
+    setTasks(
+      tasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              notes: t.notes.filter((n) => n.id !== noteId),
+            }
+          : t
+      )
+    );
   };
 
   return (
@@ -217,7 +236,16 @@ export default function TasksPanel() {
                           >
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <span className="text-white font-medium">Note {idx + 1}</span>
-                              <span className="text-xs text-slate-400">{formatDate(note.createdAt)}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400">{formatDate(note.createdAt)}</span>
+                                <button
+                                  onClick={() => handleDeleteNote(task.id, note.id)}
+                                  className="text-xs bg-red-600/60 text-white px-2 py-1 rounded hover:bg-red-600/80 transition whitespace-nowrap"
+                                  title="Delete note"
+                                >
+                                  ✕
+                                </button>
+                              </div>
                             </div>
                             <p className="text-slate-300 mb-2">{note.description}</p>
                             <div className="text-xs text-slate-400">

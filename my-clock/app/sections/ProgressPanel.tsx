@@ -49,15 +49,20 @@ export default function ProgressPanel({
     setIsMounted(true);
     const saved = window.localStorage.getItem("progress_data");
     if (saved) {
-      const data = JSON.parse(saved);
-      setUserName(data.userName || "");
-      // Ensure all tasks have notes property (migration for old data)
-      const migratedTasks = (data.tasks || []).map((task: Task) => ({
-        ...task,
-        notes: task.notes || [],
-      }));
-      setTasks(migratedTasks);
-      setShowNameInput(!data.userName);
+      try {
+        const data = JSON.parse(saved);
+        setUserName(data.userName || "");
+        // Ensure all tasks have notes property (migration for old data)
+        const migratedTasks = (data.tasks || []).map((task: Task) => ({
+          ...task,
+          notes: task.notes || [],
+        }));
+        setTasks(migratedTasks);
+        setShowNameInput(!data.userName);
+      } catch (error) {
+        console.error("Failed to load progress data:", error);
+        setShowNameInput(true);
+      }
     }
   }, []);
 
@@ -66,9 +71,14 @@ export default function ProgressPanel({
     if (isMounted && currentProgressTask) {
       const pending = window.localStorage.getItem("pending_session");
       if (pending) {
-        const { taskId, duration } = JSON.parse(pending);
-        if (taskId === currentProgressTask.id) {
-          addSessionToTask(taskId, duration);
+        try {
+          const { taskId, duration } = JSON.parse(pending);
+          if (taskId === currentProgressTask.id) {
+            addSessionToTask(taskId, duration);
+            window.localStorage.removeItem("pending_session");
+          }
+        } catch (error) {
+          console.error("Failed to parse pending session:", error);
           window.localStorage.removeItem("pending_session");
         }
       }
@@ -80,9 +90,14 @@ export default function ProgressPanel({
     if (isMounted && currentProgressTask) {
       const pending = window.localStorage.getItem("pending_note");
       if (pending) {
-        const { taskId, note } = JSON.parse(pending);
-        if (taskId === currentProgressTask.id) {
-          handleAddNote(taskId, note);
+        try {
+          const { taskId, note } = JSON.parse(pending);
+          if (taskId === currentProgressTask.id) {
+            handleAddNote(taskId, note);
+            window.localStorage.removeItem("pending_note");
+          }
+        } catch (error) {
+          console.error("Failed to parse pending note:", error);
           window.localStorage.removeItem("pending_note");
         }
       }

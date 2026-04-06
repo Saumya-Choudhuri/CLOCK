@@ -73,15 +73,20 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     const loadTasks = () => {
       const saved = window.localStorage.getItem("progress_data");
       if (saved) {
-        // Only update if data has actually changed
-        if (saved !== lastDataStr) {
-          lastDataStr = saved;
-          const data = JSON.parse(saved);
-          const migratedTasks = (data.tasks || []).map((task: Task) => ({
-            ...task,
-            notes: task.notes || [],
-          }));
-          setTasks(migratedTasks);
+        try {
+          // Only update if data has actually changed
+          if (saved !== lastDataStr) {
+            lastDataStr = saved;
+            const data = JSON.parse(saved);
+            const migratedTasks = (data.tasks || []).map((task: Task) => ({
+              ...task,
+              notes: task.notes || [],
+            }));
+            setTasks(migratedTasks);
+          }
+        } catch (error) {
+          console.error("Failed to load progress data:", error);
+          window.localStorage.removeItem("progress_data");
         }
       }
     };

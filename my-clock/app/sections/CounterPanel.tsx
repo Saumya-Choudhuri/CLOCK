@@ -74,7 +74,6 @@ export default function CounterPanel({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteDescription, setNoteDescription] = useState("");
-  const [noteDuration, setNoteDuration] = useState<number>(0);
   const [wasRunningBeforeNote, setWasRunningBeforeNote] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
@@ -273,7 +272,7 @@ export default function CounterPanel({
 
   const handleAddNote = () => {
     if (noteDescription.trim() && selectedTaskId) {
-      // Add note to the selected task
+      // Add note to the selected task using the current elapsed time
       const updatedTasks = tasks.map((task) => {
         if (task.id === selectedTaskId) {
           return {
@@ -283,7 +282,7 @@ export default function CounterPanel({
               {
                 id: Date.now().toString(),
                 description: noteDescription,
-                duration: noteDuration,
+                duration: elapsedMs,
                 createdAt: Date.now(),
               },
             ],
@@ -301,7 +300,6 @@ export default function CounterPanel({
       );
       
       setNoteDescription("");
-      setNoteDuration(0);
       setShowNoteModal(false);
       // Resume timer if it was running before
       if (wasRunningBeforeNote) {
@@ -323,15 +321,12 @@ export default function CounterPanel({
       clearTick();
       setRunning(false);
     }
-    // Set duration to current elapsed time by default
-    setNoteDuration(elapsedMs);
     setShowNoteModal(true);
   };
 
   const handleNoteModalClose = () => {
     setShowNoteModal(false);
     setNoteDescription("");
-    setNoteDuration(0);
     // Resume timer if it was running before
     if (wasRunningBeforeNote) {
       setRunning(true);
