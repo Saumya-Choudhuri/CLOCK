@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface TaskSession {
   startTime: number;
@@ -41,7 +41,7 @@ export default function ProgressPanel({
   const [isMounted, setIsMounted] = useState(false);
 
   // Declare functions before useEffect
-  const addSessionToTask = (taskId: string, duration: number) => {
+  const addSessionToTask = useCallback((taskId: string, duration: number) => {
     const endTime = Date.now();
     setTasks((prevTasks) =>
       prevTasks.map((t) =>
@@ -60,9 +60,9 @@ export default function ProgressPanel({
           : t
       )
     );
-  };
+  }, []);
 
-  const handleAddNote = (taskId: string, note: TaskNote) => {
+  const handleAddNote = useCallback((taskId: string, note: TaskNote) => {
     setTasks((prevTasks) =>
       prevTasks.map((t) =>
         t.id === taskId
@@ -76,7 +76,7 @@ export default function ProgressPanel({
     if (onTaskSessionComplete) {
       onTaskSessionComplete(taskId, note.duration);
     }
-  };
+  }, [onTaskSessionComplete]);
 
   // Load from localStorage
   useEffect(() => {

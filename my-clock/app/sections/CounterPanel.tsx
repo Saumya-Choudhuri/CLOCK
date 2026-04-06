@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -83,10 +83,10 @@ export default function CounterPanel({
   const wasRunningBeforeSwitchRef = useRef(false);
 
   // Declare functions before useEffect
-  const clearTick = () => {
+  const clearTick = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = null;
-  };
+  }, []);
 
   useEffect(() => {
     setIsMounted(true);
@@ -340,7 +340,7 @@ export default function CounterPanel({
     }
   };
 
-  const startTimerNow = () => {
+  const startTimerNow = useCallback(() => {
     setRunning(true);
     startTsRef.current = Date.now() - elapsedMs;
 
@@ -349,7 +349,7 @@ export default function CounterPanel({
       if (startTsRef.current == null) return;
       setElapsedMs(Date.now() - startTsRef.current);
     }, 250);
-  };
+  }, [elapsedMs, clearTick]);
 
   const startWithCountdown = () => {
     if (running || preCount !== null) return;
@@ -370,7 +370,7 @@ export default function CounterPanel({
       1000
     );
     return () => clearTimeout(t);
-  }, [preCount, isActive, running]);
+  }, [preCount, startTimerNow]);
 
   useEffect(() => {
     return () => clearTick();

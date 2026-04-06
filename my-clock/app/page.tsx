@@ -17,7 +17,7 @@ export default function Home() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   
   // Progress tracking
-  const [currentProgressTask, setCurrentProgressTask] = useState<{
+  const [currentProgressTask] = useState<{
     id: string;
     name: string;
   } | null>(null);

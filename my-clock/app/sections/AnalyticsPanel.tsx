@@ -456,7 +456,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => `${value.toFixed(2)}h`}
+                    formatter={(value: unknown) => typeof value === 'number' ? `${value.toFixed(2)}h` : '0h'}
                     contentStyle={{
                       backgroundColor: "#1e293b",
                       border: "1px solid #475569",
@@ -478,7 +478,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                   <XAxis dataKey="name" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip
-                    formatter={(value: number) => `${value}h`}
+                    formatter={(value: unknown) => typeof value === 'number' ? `${value}h` : '0h'}
                     contentStyle={{
                       backgroundColor: "#1e293b",
                       border: "1px solid #475569",
@@ -499,7 +499,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                   <XAxis dataKey="date" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip
-                    formatter={(value: number) => `${value}h`}
+                    formatter={(value: unknown) => typeof value === 'number' ? `${value}h` : '0h'}
                     contentStyle={{
                       backgroundColor: "#1e293b",
                       border: "1px solid #475569",

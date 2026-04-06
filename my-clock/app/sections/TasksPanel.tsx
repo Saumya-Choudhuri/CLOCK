@@ -27,7 +27,6 @@ interface Task {
 export default function TasksPanel() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
@@ -78,13 +77,11 @@ export default function TasksPanel() {
 
   // Save tasks to localStorage
   useEffect(() => {
-    if (isMounted) {
-      window.localStorage.setItem(
-        "progress_data",
-        JSON.stringify({ tasks })
-      );
-    }
-  }, [tasks, isMounted]);
+    window.localStorage.setItem(
+      "progress_data",
+      JSON.stringify({ tasks })
+    );
+  }, [tasks]);
 
   // Calculate total duration for a task (including both sessions and notes)
   const calculateTaskDuration = (task: Task): number => {
