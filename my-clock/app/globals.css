@@ -1,21 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
+  --background: #0a0f18;
+  --foreground: #f7f2e9;
+  --muted: #a6adbf;
+  --accent: #d9b46f;
+  --accent-strong: #f0c987;
+  --accent-2: #c28b5a;
+  --panel: #111827;
+  --panel-2: #0f172a;
+  --border: rgba(217, 180, 111, 0.2);
+  --shadow: 0 22px 60px rgba(2, 6, 23, 0.55);
+  --clock-font: var(--font-display);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
+    --background: #0a0f18;
+    --foreground: #f7f2e9;
   }
 }
 
@@ -24,5 +33,343 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(217, 180, 111, 0.25), transparent 60%),
+    radial-gradient(900px 520px at 90% 10%, rgba(92, 146, 153, 0.18), transparent 55%),
+    radial-gradient(1000px 700px at 50% 120%, rgba(194, 139, 90, 0.2), transparent 55%);
+  pointer-events: none;
+  z-index: -2;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20% -10% auto -10%;
+  height: 65vh;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.05), transparent 45%);
+  filter: blur(60px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: -1;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), serif;
+}
+
+[data-clock-font="display"] {
+  --clock-font: var(--font-display);
+}
+
+[data-clock-font="grotesk"] {
+  --clock-font: var(--font-body);
+}
+
+[data-clock-font="sora"] {
+  --clock-font: var(--font-sora);
+}
+
+[data-clock-font="mono"] {
+  --clock-font: var(--font-mono);
+}
+
+.clock-font {
+  font-family: var(--clock-font), serif;
+}
+
+.premium-bg {
+  position: relative;
+  background: linear-gradient(160deg, rgba(6, 9, 15, 0.95), rgba(12, 18, 32, 0.95));
+}
+
+.ambient-orbs {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(240px 240px at 15% 20%, rgba(217, 180, 111, 0.22), transparent 60%),
+    radial-gradient(300px 300px at 85% 30%, rgba(92, 146, 153, 0.2), transparent 62%),
+    radial-gradient(280px 280px at 35% 85%, rgba(194, 139, 90, 0.25), transparent 65%);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-shell {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.premium-header {
+  background: linear-gradient(120deg, rgba(13, 19, 32, 0.95), rgba(9, 13, 23, 0.92));
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 12px 40px rgba(2, 6, 23, 0.4);
+  backdrop-filter: blur(14px);
+}
+
+.title-glow {
+  text-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.tab-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.tab-pill:hover {
+  border-color: rgba(217, 180, 111, 0.35);
+  color: var(--foreground);
+}
+
+.tab-pill[data-active="true"] {
+  background: linear-gradient(135deg, rgba(240, 201, 135, 0.9), rgba(194, 139, 90, 0.9));
+  color: #1b1307;
+  border-color: rgba(217, 180, 111, 0.6);
+  box-shadow: 0 12px 25px rgba(217, 180, 111, 0.22);
+}
+
+.nav-link {
+  position: relative;
+  padding: 0.35rem 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.2s ease;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.35rem;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(120deg, rgba(240, 201, 135, 0.9), rgba(194, 139, 90, 0.9));
+  transition: width 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--foreground);
+}
+
+.nav-link[data-active="true"] {
+  color: var(--foreground);
+}
+
+.nav-link[data-active="true"]::after,
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:focus-visible,
+.tab-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(240, 201, 135, 0.3);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, rgba(240, 201, 135, 0.95), rgba(194, 139, 90, 0.95));
+  color: #1a1206;
+  border-color: rgba(240, 201, 135, 0.65);
+  box-shadow: 0 10px 25px rgba(217, 180, 111, 0.25);
+}
+
+.btn-outline {
+  background: rgba(15, 23, 42, 0.55);
+  color: var(--foreground);
+  border-color: rgba(217, 180, 111, 0.35);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--foreground);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-muted {
+  background: rgba(15, 23, 42, 0.65);
+  color: var(--muted);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.btn-danger {
+  background: rgba(185, 44, 44, 0.9);
+  color: #fff4f4;
+  border-color: rgba(217, 80, 80, 0.65);
+}
+
+.premium-panel {
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.85), rgba(9, 13, 23, 0.85));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.premium-frame {
+  position: relative;
+  overflow: hidden;
+}
+
+.floating-controls {
+  background: rgba(11, 18, 32, 0.78);
+  border: 1px solid rgba(217, 180, 111, 0.25);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.45);
+  backdrop-filter: blur(18px);
+}
+
+.panel-surface {
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(217, 180, 111, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.45);
+  backdrop-filter: blur(16px);
+}
+
+.card-surface {
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(2, 6, 23, 0.35);
+}
+
+.stat-card {
+  background: linear-gradient(135deg, rgba(217, 180, 111, 0.12), rgba(17, 24, 39, 0.85));
+  border: 1px solid rgba(217, 180, 111, 0.25);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 10px 25px rgba(2, 6, 23, 0.35);
+}
+
+.stat-card[data-tone="teal"] {
+  border-color: rgba(124, 196, 196, 0.35);
+  background: linear-gradient(135deg, rgba(124, 196, 196, 0.18), rgba(17, 24, 39, 0.85));
+}
+
+.stat-card[data-tone="sage"] {
+  border-color: rgba(163, 177, 138, 0.35);
+  background: linear-gradient(135deg, rgba(163, 177, 138, 0.2), rgba(17, 24, 39, 0.85));
+}
+
+.stat-card[data-tone="clay"] {
+  border-color: rgba(224, 122, 95, 0.35);
+  background: linear-gradient(135deg, rgba(224, 122, 95, 0.2), rgba(17, 24, 39, 0.85));
+}
+
+.input-premium,
+.select-premium {
+  background: rgba(10, 15, 24, 0.65);
+  color: var(--foreground);
+  border: 1px solid rgba(217, 180, 111, 0.25);
+  border-radius: 12px;
+  padding: 0.55rem 0.85rem;
+  font-weight: 500;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-premium:focus,
+.select-premium:focus {
+  outline: none;
+  border-color: rgba(240, 201, 135, 0.8);
+  box-shadow: 0 0 0 3px rgba(240, 201, 135, 0.2);
+}
+
+.input-premium::placeholder {
+  color: rgba(166, 173, 191, 0.7);
+}
+
+.range-premium {
+  accent-color: var(--accent);
+}
+
+.table-row {
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.table-row:hover {
+  background: rgba(217, 180, 111, 0.08);
+}
+
+.time-glow {
+  text-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-rise {
+  animation: rise 0.7s ease both;
+}
+
+.animate-fade {
+  animation: fade 0.9s ease both;
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 0 16px;
+  }
 }

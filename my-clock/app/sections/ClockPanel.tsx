@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import ClockScreen from "../components/ClockScreen";
+
+type ClockFont = "display" | "grotesk" | "sora" | "mono";
 
 interface ClockPanelProps {
   backgroundUrl?: string | null;
@@ -12,6 +14,9 @@ interface ClockPanelProps {
   onOpacityChange?: (opacity: number) => void;
   onBackgroundOpacityChange?: (opacity: number) => void;
   onThemeChange?: (theme: "light" | "dark") => void;
+  clockFont?: ClockFont;
+  onClockFontChange?: (font: ClockFont) => void;
+  onBackgroundChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function ClockPanel({
@@ -23,6 +28,9 @@ export default function ClockPanel({
   onOpacityChange,
   onBackgroundOpacityChange,
   onThemeChange,
+  clockFont = "display",
+  onClockFontChange,
+  onBackgroundChange,
 }: ClockPanelProps) {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -77,7 +85,7 @@ export default function ClockPanel({
   return (
     <div className="space-y-4">
       <div
-        className="rounded-lg overflow-hidden border border-slate-700 relative h-[70vh] bg-slate-900"
+        className="premium-panel premium-frame h-[70vh]"
         ref={timerRef}
         style={isFullscreen ? { height: "100vh", borderRadius: 0 } : {}}
       >
@@ -114,14 +122,15 @@ export default function ClockPanel({
           </video>
         )}
 
-        <div className="absolute top-4 right-4 z-10 flex flex-col gap-3 bg-slate-800/95 backdrop-blur p-4 rounded-lg border border-slate-700 transition-opacity duration-300" style={{ opacity: showControls ? 1 : 0, pointerEvents: showControls ? "auto" : "none" }}>
+        <div
+          className="absolute top-4 right-4 z-10 flex flex-col gap-3 floating-controls p-4 transition-opacity duration-300"
+          style={{ opacity: showControls ? 1 : 0, pointerEvents: showControls ? "auto" : "none" }}
+        >
           <div className="flex gap-2 items-center">
             <button
               onClick={handleFullscreen}
-              className={`px-2 py-1 rounded text-xs border font-medium ${
-                isFullscreen
-                  ? "bg-[#FFEDDF] text-slate-900"
-                  : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
+              className={`btn px-3 py-1.5 text-xs ${
+                isFullscreen ? "btn-primary" : "btn-ghost"
               }`}
               title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
             >
@@ -130,23 +139,19 @@ export default function ClockPanel({
           </div>
 
           <div className="flex gap-2 items-center">
-            <label className="text-xs text-slate-300 font-medium">Theme:</label>
+            <label className="text-xs text-[color:var(--muted)] font-medium">Theme:</label>
             <button
               onClick={() => onThemeChange?.("light")}
-              className={`px-2 py-1 rounded text-xs border ${
-                theme === "light"
-                  ? "bg-[#FFEDDF] text-slate-900"
-                  : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
+              className={`btn px-3 py-1.5 text-xs ${
+                theme === "light" ? "btn-primary" : "btn-ghost"
               }`}
             >
               Light
             </button>
             <button
               onClick={() => onThemeChange?.("dark")}
-              className={`px-2 py-1 rounded text-xs border ${
-                theme === "dark"
-                  ? "bg-[#FFEDDF] text-slate-900"
-                  : "bg-slate-700 border-slate-600 text-slate-100 hover:bg-slate-600"
+              className={`btn px-3 py-1.5 text-xs ${
+                theme === "dark" ? "btn-primary" : "btn-ghost"
               }`}
             >
               Dark
@@ -154,7 +159,23 @@ export default function ClockPanel({
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-300 font-medium whitespace-nowrap">Brightness:</label>
+            <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">
+              Clock Font:
+            </label>
+            <select
+              value={clockFont}
+              onChange={(e) => onClockFontChange?.(e.target.value as ClockFont)}
+              className="select-premium w-auto text-xs"
+            >
+              <option value="display">Cormorant</option>
+              <option value="grotesk">Space Grotesk</option>
+              <option value="sora">Sora</option>
+              <option value="mono">JetBrains Mono</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">Brightness:</label>
             <input
               type="range"
               min={0.2}
@@ -162,15 +183,15 @@ export default function ClockPanel({
               step={0.05}
               value={overlayOpacity}
               onChange={(e) => onOpacityChange?.(Number(e.target.value))}
-              className="w-20 accent-[#FFEDDF]"
+              className="w-24 range-premium"
             />
-            <div className="text-xs font-mono tabular-nums w-7 text-right text-slate-300">
+            <div className="text-xs font-mono tabular-nums w-7 text-right text-[color:var(--muted)]">
               {Math.round(overlayOpacity * 100)}%
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-300 font-medium whitespace-nowrap">BG Opacity:</label>
+            <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">BG Opacity:</label>
             <input
               type="range"
               min={0.2}
@@ -178,11 +199,26 @@ export default function ClockPanel({
               step={0.05}
               value={backgroundOpacity}
               onChange={(e) => onBackgroundOpacityChange?.(Number(e.target.value))}
-              className="w-20 accent-[#FFEDDF]"
+              className="w-24 range-premium"
             />
-            <div className="text-xs font-mono tabular-nums w-7 text-right text-slate-300">
+            <div className="text-xs font-mono tabular-nums w-7 text-right text-[color:var(--muted)]">
               {Math.round(backgroundOpacity * 100)}%
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">
+              Background:
+            </label>
+            <label className="btn btn-outline px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] cursor-pointer">
+              Choose
+              <input
+                type="file"
+                accept="image/*,video/*"
+                onChange={onBackgroundChange}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
 

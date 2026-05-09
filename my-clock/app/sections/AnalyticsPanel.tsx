@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -16,6 +16,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { getProgressDiagnostics } from "../utils/progressDiagnostics";
 
 interface TaskSession {
   startTime: number;
@@ -47,16 +48,16 @@ type ChartType = "pie" | "bar" | "line";
 type TimePeriod = "daily" | "weekly" | "monthly" | "all";
 
 const COLORS = [
-  "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-  "#FFA07A",
-  "#98D8C8",
-  "#F7DC6F",
-  "#BB8FCE",
-  "#85C1E2",
-  "#F8B88B",
-  "#A8E6CF",
+  "#D9B46F",
+  "#7CC4C4",
+  "#F2A65A",
+  "#E07A5F",
+  "#A3B18A",
+  "#6B8E8E",
+  "#E4C1A1",
+  "#B7C4CF",
+  "#C89F9C",
+  "#88BDBC",
 ];
 
 export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPanelProps) {
@@ -64,6 +65,38 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
   const [chartType, setChartType] = useState<ChartType>("pie");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
   const [isMounted, setIsMounted] = useState(false);
+  const diagnosticsRef = useRef<string>("");
+
+  const nameCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    tasks.forEach((task) => {
+      counts.set(task.name, (counts.get(task.name) ?? 0) + 1);
+    });
+    return counts;
+  }, [tasks]);
+
+  const diagnostics = useMemo(() => getProgressDiagnostics(tasks), [tasks]);
+
+  useEffect(() => {
+    if (diagnostics.length === 0) {
+      diagnosticsRef.current = "";
+      return;
+    }
+
+    const signature = diagnostics.map((issue) => issue.code).join("|");
+    if (signature === diagnosticsRef.current) return;
+    diagnosticsRef.current = signature;
+    console.warn("[AnalyticsPanel] Progress data diagnostics", diagnostics);
+  }, [diagnostics]);
+
+  const getTaskLabel = (task: Task) => {
+    const count = nameCounts.get(task.name) ?? 0;
+    if (count > 1) {
+      const suffix = task.id.slice(-4) || task.id;
+      return `${task.name} (${suffix})`;
+    }
+    return task.name;
+  };
 
   // Load from localStorage
   useEffect(() => {
@@ -72,22 +105,31 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     
     const loadTasks = () => {
       const saved = window.localStorage.getItem("progress_data");
-      if (saved) {
-        try {
-          // Only update if data has actually changed
-          if (saved !== lastDataStr) {
-            lastDataStr = saved;
-            const data = JSON.parse(saved);
-            const migratedTasks = (data.tasks || []).map((task: Task) => ({
-              ...task,
-              notes: task.notes || [],
-            }));
-            setTasks(migratedTasks);
-          }
-        } catch (error) {
-          console.error("Failed to load progress data:", error);
-          window.localStorage.removeItem("progress_data");
+      if (!saved) {
+        if (lastDataStr !== "") {
+          lastDataStr = "";
+          setTasks([]);
         }
+        return;
+      }
+
+      try {
+        // Only update if data has actually changed
+        if (saved !== lastDataStr) {
+          lastDataStr = saved;
+          const data = JSON.parse(saved);
+          const migratedTasks = (data.tasks || []).map((task: Task) => ({
+            ...task,
+            sessions: task.sessions || [],
+            notes: task.notes || [],
+          }));
+          setTasks(migratedTasks);
+        }
+      } catch (error) {
+        console.error("Failed to load progress data:", error);
+        window.localStorage.removeItem("progress_data");
+        lastDataStr = "";
+        setTasks([]);
       }
     };
 
@@ -167,7 +209,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     return filteredTasks
       .filter((task) => calculateTaskDuration(task) > 0)
       .map((task) => ({
-        name: task.name,
+        name: getTaskLabel(task),
         value: formatToHours(calculateTaskDuration(task)),
         duration: calculateTaskDuration(task),
       }));
@@ -179,58 +221,66 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     return filteredTasks
       .filter((task) => calculateTaskDuration(task) > 0)
       .map((task) => ({
-        name: task.name,
+        name: getTaskLabel(task),
         duration: formatToHours(calculateTaskDuration(task)),
         sessions: task.sessions.length,
       }))
       .sort((a, b) => b.duration - a.duration);
   };
 
+  const formatDayKey = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return {
+      key: `${year}-${month}-${day}`,
+      label: date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    };
+  };
+
   // Prepare data for line chart (by day)
   const getLineChartData = () => {
     const filteredTasks = getFilteredTasks();
-    const dailyData: Record<string, Record<string, number>> = {};
+    const dailyData: Record<string, { label: string; values: Record<string, number> }> = {};
 
     filteredTasks.forEach((task) => {
+      const label = getTaskLabel(task);
       // Include sessions
       task.sessions.forEach((session) => {
-        const date = new Date(session.startTime).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        });
+        const dayMeta = formatDayKey(session.startTime);
 
-        if (!dailyData[date]) {
-          dailyData[date] = {};
+        if (!dailyData[dayMeta.key]) {
+          dailyData[dayMeta.key] = { label: dayMeta.label, values: {} };
         }
 
-        dailyData[date][task.name] = (dailyData[date][task.name] || 0) + formatToHours(session.duration);
+        dailyData[dayMeta.key].values[label] = (dailyData[dayMeta.key].values[label] || 0) + formatToHours(session.duration);
       });
 
       // Include notes
       task.notes.forEach((note) => {
-        const date = new Date(note.createdAt).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        });
+        const dayMeta = formatDayKey(note.createdAt);
 
-        if (!dailyData[date]) {
-          dailyData[date] = {};
+        if (!dailyData[dayMeta.key]) {
+          dailyData[dayMeta.key] = { label: dayMeta.label, values: {} };
         }
 
-        dailyData[date][task.name] = (dailyData[date][task.name] || 0) + formatToHours(note.duration);
+        dailyData[dayMeta.key].values[label] = (dailyData[dayMeta.key].values[label] || 0) + formatToHours(note.duration);
       });
     });
 
     return Object.entries(dailyData)
-      .map(([date, data]) => ({
-        date,
-        ...data,
+      .map(([key, data]) => ({
+        key,
+        date: data.label,
+        ...data.values,
       }))
-      .sort((a, b) => {
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        return dateA - dateB;
-      });
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map(({ key, ...rest }) => rest);
   };
 
   // Calculate statistics
@@ -304,42 +354,39 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
   const lineData = getLineChartData();
 
   return (
-    <div className="w-full h-full overflow-y-auto p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full h-full overflow-y-auto">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
-          <h2 className="text-3xl font-bold text-white">Analytics Dashboard</h2>
+          <div className="space-y-1">
+            <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--muted)]">Insights</p>
+            <h2 className="text-3xl md:text-4xl font-display text-white">Analytics Dashboard</h2>
+          </div>
 
           {/* Controls */}
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-slate-800/50 backdrop-blur p-4 rounded-lg border border-slate-700">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between panel-surface p-4">
             {/* Chart Type Selector */}
             <div className="flex gap-2">
               <button
                 onClick={() => setChartType("pie")}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  chartType === "pie"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-slate-700 text-slate-200 hover:bg-slate-600"
+                className={`btn px-4 py-2 text-xs uppercase tracking-[0.18em] ${
+                  chartType === "pie" ? "btn-primary" : "btn-ghost"
                 }`}
               >
                 Pie Chart
               </button>
               <button
                 onClick={() => setChartType("bar")}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  chartType === "bar"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-slate-700 text-slate-200 hover:bg-slate-600"
+                className={`btn px-4 py-2 text-xs uppercase tracking-[0.18em] ${
+                  chartType === "bar" ? "btn-primary" : "btn-ghost"
                 }`}
               >
                 Bar Chart
               </button>
               <button
                 onClick={() => setChartType("line")}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  chartType === "line"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-slate-700 text-slate-200 hover:bg-slate-600"
+                className={`btn px-4 py-2 text-xs uppercase tracking-[0.18em] ${
+                  chartType === "line" ? "btn-primary" : "btn-ghost"
                 }`}
               >
                 Line Chart
@@ -351,7 +398,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
               <select
                 value={timePeriod}
                 onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
-                className="px-4 py-2 rounded-lg bg-slate-700 text-white border border-slate-600 font-medium hover:bg-slate-600 transition-all"
+                className="select-premium w-auto"
               >
                 <option value="daily">Last 24 Hours</option>
                 <option value="weekly">Last 7 Days</option>
@@ -362,7 +409,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
               {/* Export Button */}
               <button
                 onClick={handleExportData}
-                className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-all shadow-lg"
+                className="btn btn-primary px-4 py-2 text-xs uppercase tracking-[0.18em]"
               >
                 Export
               </button>
@@ -372,50 +419,65 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/10 border border-blue-700/30 rounded-lg p-4 backdrop-blur">
-            <div className="text-slate-400 text-sm font-medium">Total Time</div>
-            <div className="text-2xl font-bold text-blue-400 mt-2">
+          <div className="stat-card">
+            <div className="text-[color:var(--muted)] text-sm font-medium">Total Time</div>
+            <div className="text-2xl font-bold text-white mt-2 clock-font tabular-nums">
               {formatDuration(stats.totalDuration)}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border border-purple-700/30 rounded-lg p-4 backdrop-blur">
-            <div className="text-slate-400 text-sm font-medium">Total Sessions</div>
-            <div className="text-2xl font-bold text-purple-400 mt-2">
+          <div className="stat-card" data-tone="teal">
+            <div className="text-[color:var(--muted)] text-sm font-medium">Total Sessions</div>
+            <div className="text-2xl font-bold text-white mt-2 clock-font tabular-nums">
               {stats.totalSessions}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-900/30 to-green-800/10 border border-green-700/30 rounded-lg p-4 backdrop-blur">
-            <div className="text-slate-400 text-sm font-medium">Avg Duration</div>
-            <div className="text-2xl font-bold text-green-400 mt-2">
+          <div className="stat-card" data-tone="sage">
+            <div className="text-[color:var(--muted)] text-sm font-medium">Avg Duration</div>
+            <div className="text-2xl font-bold text-white mt-2 clock-font tabular-nums">
               {formatDuration(stats.avgDurationPerSession)}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/10 border border-orange-700/30 rounded-lg p-4 backdrop-blur">
-            <div className="text-slate-400 text-sm font-medium">Active Tasks</div>
-            <div className="text-2xl font-bold text-orange-400 mt-2">
+          <div className="stat-card" data-tone="clay">
+            <div className="text-[color:var(--muted)] text-sm font-medium">Active Tasks</div>
+            <div className="text-2xl font-bold text-white mt-2 clock-font tabular-nums">
               {stats.totalTasks}
             </div>
           </div>
         </div>
 
+        {diagnostics.length > 0 && (
+          <div className="panel-surface p-4">
+            <div className="text-xs uppercase tracking-[0.3em] text-[color:var(--muted)]">
+              Diagnostics
+            </div>
+            <div className="mt-2 space-y-1 text-xs text-[color:var(--muted)]">
+              {diagnostics.map((issue, index) => (
+                <div key={`${issue.code}-${index}`}>
+                  {issue.level.toUpperCase()}: {issue.message}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Most Productive Task */}
         {stats.mostProductiveTask && (
-          <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-4">
-            <div className="text-slate-400 text-sm font-medium">Most Productive Task</div>
-            <div className="text-xl font-bold text-amber-400 mt-2">
+          <div className="panel-surface p-4">
+            <div className="text-[color:var(--muted)] text-sm font-medium">Most Productive Task</div>
+            <div className="text-xl font-bold text-[color:var(--accent-strong)] mt-2">
               {stats.mostProductiveTask.name}
             </div>
-            <div className="text-slate-300 text-sm mt-1">
+            <div className="text-[color:var(--muted)] text-sm mt-1">
               {formatDuration(calculateTaskDuration(stats.mostProductiveTask))} spent
             </div>
           </div>
         )}
 
           {/* Chart Section */}
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6">
+        <div className="panel-surface p-6">
           <h3 className="text-xl font-bold text-white mb-2">
             {chartType === "pie"
               ? "Time Distribution"
@@ -423,7 +485,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                 ? "Tasks by Duration"
                 : "Daily Progress"}
           </h3>
-          <p className="text-xs text-slate-400 mb-6">
+          <p className="text-xs text-[color:var(--muted)] mb-6">
             Period: {timePeriod === "daily" ? "Last 24 Hours" : timePeriod === "weekly" ? "Last 7 Days" : timePeriod === "monthly" ? "Last 30 Days" : "All Time"} | 
             Tasks with data: {getFilteredTasks().filter((t) => calculateTaskDuration(t) > 0).length} | 
             Total sessions: {getFilteredTasks().reduce((sum, t) => sum + t.sessions.length, 0)} | 
@@ -431,7 +493,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
           </p>
 
           {pieData.length === 0 && barData.length === 0 && lineData.length === 0 ? (
-            <div className="flex items-center justify-center h-80 text-slate-400">
+            <div className="flex items-center justify-center h-80 text-[color:var(--muted)]">
               <div className="text-center">
                 <p>No data available for the selected period</p>
                 <p className="text-sm mt-2">Start tracking tasks to see analytics</p>
@@ -458,63 +520,64 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                   <Tooltip
                     formatter={(value: unknown) => typeof value === 'number' ? `${value.toFixed(2)}h` : '0h'}
                     contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid #475569",
-                      borderRadius: "8px",
-                      color: "#f1f5f9",
+                      backgroundColor: "#0f172a",
+                      border: "1px solid rgba(217, 180, 111, 0.35)",
+                      borderRadius: "10px",
+                      color: "#f7f2e9",
                     }}
                   />
                   <Legend
                     verticalAlign="bottom"
                     height={36}
+                    wrapperStyle={{ color: "#a6adbf" }}
                   />
                 </PieChart>
               ) : chartType === "bar" && barData.length > 0 ? (
                 <BarChart data={barData}>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#475569"
+                    stroke="#374151"
                   />
-                  <XAxis dataKey="name" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" />
+                  <XAxis dataKey="name" stroke="#a6adbf" />
+                  <YAxis stroke="#a6adbf" />
                   <Tooltip
                     formatter={(value: unknown) => typeof value === 'number' ? `${value}h` : '0h'}
                     contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid #475569",
-                      borderRadius: "8px",
-                      color: "#f1f5f9",
+                      backgroundColor: "#0f172a",
+                      border: "1px solid rgba(217, 180, 111, 0.35)",
+                      borderRadius: "10px",
+                      color: "#f7f2e9",
                     }}
                   />
-                  <Legend />
-                  <Bar dataKey="duration" fill="#3b82f6" />
-                  <Bar dataKey="sessions" fill="#8b5cf6" />
+                  <Legend wrapperStyle={{ color: "#a6adbf" }} />
+                  <Bar dataKey="duration" fill="#D9B46F" />
+                  <Bar dataKey="sessions" fill="#7CC4C4" />
                 </BarChart>
               ) : chartType === "line" && lineData.length > 0 ? (
                 <LineChart data={lineData}>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#475569"
+                    stroke="#374151"
                   />
-                  <XAxis dataKey="date" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" />
+                  <XAxis dataKey="date" stroke="#a6adbf" />
+                  <YAxis stroke="#a6adbf" />
                   <Tooltip
                     formatter={(value: unknown) => typeof value === 'number' ? `${value}h` : '0h'}
                     contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid #475569",
-                      borderRadius: "8px",
-                      color: "#f1f5f9",
+                      backgroundColor: "#0f172a",
+                      border: "1px solid rgba(217, 180, 111, 0.35)",
+                      borderRadius: "10px",
+                      color: "#f7f2e9",
                     }}
                   />
-                  <Legend />
+                  <Legend wrapperStyle={{ color: "#a6adbf" }} />
                   {getFilteredTasks()
                     .filter((task) => calculateTaskDuration(task) > 0)
                     .map((task, index) => (
                       <Line
                         key={task.id}
                         type="monotone"
-                        dataKey={task.name}
+                        dataKey={getTaskLabel(task)}
                         stroke={COLORS[index % COLORS.length]}
                         strokeWidth={2}
                         dot={{ fill: COLORS[index % COLORS.length], r: 4 }}
@@ -529,21 +592,21 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
 
         {/* Tasks Summary Table */}
         {tasks.length > 0 && (
-          <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6 overflow-x-auto">
+          <div className="panel-surface p-6 overflow-x-auto">
             <h3 className="text-xl font-bold text-white mb-4">Tasks Summary</h3>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">
+                <tr className="border-b border-[rgba(217,180,111,0.2)]">
+                  <th className="text-left py-3 px-4 text-[color:var(--muted)] font-medium">
                     Task Name
                   </th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium">
+                  <th className="text-right py-3 px-4 text-[color:var(--muted)] font-medium">
                     Duration
                   </th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium">
+                  <th className="text-right py-3 px-4 text-[color:var(--muted)] font-medium">
                     Sessions
                   </th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium">
+                  <th className="text-right py-3 px-4 text-[color:var(--muted)] font-medium">
                     Avg/Session
                   </th>
                 </tr>
@@ -558,16 +621,16 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
                   .map((task) => (
                     <tr
                       key={task.id}
-                      className="border-b border-slate-700 hover:bg-slate-700/30 transition-all"
+                      className="border-b border-[rgba(217,180,111,0.15)] table-row"
                     >
-                      <td className="py-3 px-4 text-slate-200">{task.name}</td>
-                      <td className="py-3 px-4 text-right text-blue-400 font-medium">
+                      <td className="py-3 px-4 text-white">{task.name}</td>
+                      <td className="py-3 px-4 text-right text-[color:var(--accent-strong)] font-medium clock-font tabular-nums">
                         {formatDuration(calculateTaskDuration(task))}
                       </td>
-                      <td className="py-3 px-4 text-right text-purple-400">
+                      <td className="py-3 px-4 text-right text-[color:var(--muted)]">
                         {task.sessions.length}
                       </td>
-                      <td className="py-3 px-4 text-right text-green-400">
+                      <td className="py-3 px-4 text-right text-[color:var(--muted)] clock-font tabular-nums">
                         {formatDuration(
                           task.sessions.length > 0
                             ? calculateTaskDuration(task) / task.sessions.length

@@ -41,7 +41,7 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
     <div className="h-full w-full flex items-center justify-center">
       <div className="text-center">
         <div
-          className="text-7xl font-bold tabular-nums"
+          className="text-7xl md:text-8xl clock-font font-semibold tabular-nums time-glow"
           style={{
             color: theme === "light" ? "#ffffff" : "#0f172a",
           }}
@@ -49,9 +49,9 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
           {time}
         </div>
         <div
-          className="mt-3"
+          className="mt-4 text-xs uppercase tracking-[0.25em]"
           style={{
-            color: theme === "light" ? "#cbd5e1" : "#475569",
+            color: theme === "light" ? "#d4c7b6" : "#475569",
           }}
         >
           {date}

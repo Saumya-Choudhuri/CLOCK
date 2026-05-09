@@ -78,6 +78,23 @@ export default function ProgressPanel({
     }
   }, [onTaskSessionComplete]);
 
+  const saveProgressData = useCallback((updatedUserName: string, updatedTasks: Task[]) => {
+    try {
+      const existing = window.localStorage.getItem("progress_data");
+      const parsed = existing ? JSON.parse(existing) : null;
+      const payload = parsed && typeof parsed === "object"
+        ? { ...parsed, userName: updatedUserName, tasks: updatedTasks }
+        : { userName: updatedUserName, tasks: updatedTasks };
+      window.localStorage.setItem("progress_data", JSON.stringify(payload));
+    } catch (error) {
+      console.error("Failed to save progress data:", error);
+      window.localStorage.setItem(
+        "progress_data",
+        JSON.stringify({ userName: updatedUserName, tasks: updatedTasks })
+      );
+    }
+  }, []);
+
   // Load from localStorage
   useEffect(() => {
     setIsMounted(true);
@@ -89,6 +106,7 @@ export default function ProgressPanel({
         // Ensure all tasks have notes property (migration for old data)
         const migratedTasks = (data.tasks || []).map((task: Task) => ({
           ...task,
+          sessions: task.sessions || [],
           notes: task.notes || [],
         }));
         setTasks(migratedTasks);
@@ -141,12 +159,9 @@ export default function ProgressPanel({
   // Save to localStorage
   useEffect(() => {
     if (isMounted) {
-      window.localStorage.setItem(
-        "progress_data",
-        JSON.stringify({ userName, tasks })
-      );
+      saveProgressData(userName, tasks);
     }
-  }, [userName, tasks, isMounted]);
+  }, [userName, tasks, isMounted, saveProgressData]);
 
   const handleAddName = (name: string) => {
     if (name.trim()) {
@@ -242,14 +257,14 @@ export default function ProgressPanel({
   if (!isMounted) return null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 flex flex-col items-center">
+    <div className="max-w-4xl mx-auto space-y-8 flex flex-col items-center">
       {showNameInput ? (
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4 w-full max-w-md text-center">
+        <div className="panel-surface p-6 space-y-4 w-full max-w-md text-center">
           <h2 className="text-2xl font-bold text-white">Welcome to Progress Tracker</h2>
           <input
             type="text"
             placeholder="Enter your name"
-            className="w-full px-4 py-2 rounded bg-slate-700 text-white placeholder-slate-400 border border-slate-600 text-center"
+            className="input-premium w-full text-center"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleAddName(e.currentTarget.value);
@@ -261,7 +276,7 @@ export default function ProgressPanel({
               const input = (e.target as HTMLElement).previousElementSibling as HTMLInputElement;
               handleAddName(input.value);
             }}
-            className="w-full px-4 py-2 bg-[#FFEDDF] text-slate-900 rounded font-medium hover:bg-orange-100 transition"
+            className="btn btn-primary w-full px-4 py-2 text-sm"
           >
             Start
           </button>
@@ -277,7 +292,7 @@ export default function ProgressPanel({
             {tasks.length < 10 && (
               <button
                 onClick={handleAddTask}
-                className="px-4 py-2 bg-[#FFEDDF] text-slate-900 rounded font-medium hover:bg-orange-100 transition"
+                className="btn btn-primary px-4 py-2 text-sm"
               >
                 + Add Task ({tasks.length}/10)
               </button>
@@ -287,7 +302,7 @@ export default function ProgressPanel({
                 setUserName("");
                 setShowNameInput(true);
               }}
-              className="px-3 py-1 text-sm bg-slate-700 text-slate-100 rounded hover:bg-slate-600 transition ml-auto"
+              className="btn btn-ghost px-3 py-1 text-xs ml-auto"
             >
               Change Name
             </button>
@@ -296,12 +311,12 @@ export default function ProgressPanel({
           {/* Tasks List */}
           <div className="space-y-4 w-full">
             {tasks.length === 0 ? (
-              <p className="text-slate-400 text-center">Add a task to get started!</p>
+              <p className="text-[color:var(--muted)] text-center">Add a task to get started!</p>
             ) : (
               tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="bg-slate-800 p-4 rounded-lg border border-slate-700 space-y-3 max-w-2xl mx-auto w-full"
+                  className="card-surface p-4 space-y-3 max-w-2xl mx-auto w-full"
                 >
                   <div className="flex items-center justify-between">
                     <input
@@ -314,11 +329,11 @@ export default function ProgressPanel({
                           )
                         );
                       }}
-                      className="text-lg font-semibold text-white bg-slate-700 px-3 py-1 rounded w-full"
+                      className="input-premium w-full text-lg font-semibold"
                     />
                     <button
                       onClick={() => handleRemoveTask(task.id)}
-                      className="px-3 py-1 text-sm bg-red-600/60 text-white rounded hover:bg-red-600/80 transition ml-2"
+                      className="btn btn-danger px-3 py-1 text-xs ml-2"
                     >
                       Delete
                     </button>
@@ -328,28 +343,28 @@ export default function ProgressPanel({
                     {!task.isRunning ? (
                       <button
                         onClick={() => handleStartTask(task.id)}
-                        className="px-4 py-2 bg-green-600/60 text-white rounded hover:bg-green-600/80 transition"
+                        className="btn btn-primary px-4 py-2 text-sm"
                       >
                         Start
                       </button>
                     ) : (
                       <button
                         onClick={() => handleStopTask(task.id)}
-                        className="px-4 py-2 bg-red-600/60 text-white rounded hover:bg-red-600/80 transition"
+                        className="btn btn-danger px-4 py-2 text-sm"
                       >
                         Stop
                       </button>
                     )}
                   </div>
 
-                  <div className="text-sm text-slate-300">
-                    <p>Total Time: <span className="font-mono text-white">{getTotalTime(task)}</span></p>
-                    <p>Sessions: <span className="font-mono text-white">{task.sessions.length}</span></p>
+                  <div className="text-sm text-[color:var(--muted)]">
+                    <p>Total Time: <span className="clock-font tabular-nums text-white">{getTotalTime(task)}</span></p>
+                    <p>Sessions: <span className="clock-font tabular-nums text-white">{task.sessions.length}</span></p>
                   </div>
 
                   {task.sessions.length > 0 && (
                     <div className="mt-3 space-y-2 text-sm">
-                      <p className="text-slate-300 font-medium">Recent Sessions:</p>
+                      <p className="text-[color:var(--muted)] font-medium">Recent Sessions:</p>
                       {task.sessions.slice(-3).map((session, idx) => {
                         const duration = session.duration / 1000;
                         const hours = Math.floor(duration / 3600);
@@ -358,7 +373,7 @@ export default function ProgressPanel({
                         return (
                           <div
                             key={idx}
-                            className="flex items-center justify-between bg-slate-700 p-2 rounded text-slate-300"
+                            className="flex items-center justify-between card-surface p-2 text-[color:var(--muted)]"
                           >
                             <span>
                               {new Date(session.startTime).toLocaleTimeString()} -{" "}
@@ -371,7 +386,7 @@ export default function ProgressPanel({
                                   task.sessions.indexOf(session)
                                 )
                               }
-                              className="text-xs bg-red-600/40 px-2 py-1 rounded hover:bg-red-600/60"
+                              className="btn btn-danger px-2 py-1 text-[0.65rem]"
                             >
                               Delete
                             </button>
@@ -383,7 +398,7 @@ export default function ProgressPanel({
 
                   {task.notes.length > 0 && (
                     <div className="mt-3 space-y-2 text-sm">
-                      <p className="text-slate-300 font-medium">Notes:</p>
+                      <p className="text-[color:var(--muted)] font-medium">Notes:</p>
                       {task.notes.slice(-3).map((note) => {
                         const duration = note.duration / 1000;
                         const hours = Math.floor(duration / 3600);
@@ -392,17 +407,17 @@ export default function ProgressPanel({
                         return (
                           <div
                             key={note.id}
-                            className="flex items-center justify-between bg-blue-900/50 p-2 rounded text-slate-300 border border-blue-700/50"
+                            className="flex items-center justify-between card-surface p-2 text-[color:var(--muted)]"
                           >
                             <div className="flex-1">
                               <span className="text-white font-medium">{note.description}</span>
-                              <span className="ml-2 text-slate-400">
+                              <span className="ml-2 text-[color:var(--muted)]">
                                 {hours}h {minutes}m {secs}s
                               </span>
                             </div>
                             <button
                               onClick={() => handleDeleteNote(task.id, note.id)}
-                              className="text-xs bg-red-600/40 px-2 py-1 rounded hover:bg-red-600/60 ml-2"
+                              className="btn btn-danger px-2 py-1 text-[0.65rem] ml-2"
                             >
                               Delete
                             </button>

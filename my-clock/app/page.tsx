@@ -7,6 +7,7 @@ import AnalyticsPanel from "./sections/AnalyticsPanel";
 import TasksPanel from "./sections/TasksPanel";
 
 type Tab = "clock" | "counter" | "analytics" | "tasks";
+type ClockFont = "display" | "grotesk" | "sora" | "mono";
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("clock");
@@ -15,6 +16,7 @@ export default function Home() {
   const [overlayOpacity, setOverlayOpacity] = useState(0.6);
   const [backgroundOpacity, setBackgroundOpacity] = useState(0.6);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [clockFont, setClockFont] = useState<ClockFont>("display");
   
   // Progress tracking
   const [currentProgressTask] = useState<{
@@ -91,110 +93,146 @@ export default function Home() {
     }
   }, [theme]);
 
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("clock_font");
+      if (saved) {
+        setClockFont(saved as ClockFont);
+      }
+    } catch (error) {
+      console.error("Failed to load clock font:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("clock_font", clockFont);
+    } catch (error) {
+      console.error("Failed to save clock font:", error);
+    }
+  }, [clockFont]);
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
-      <header className="p-6 border-b bg-slate-900/95 backdrop-blur flex flex-col gap-4 relative z-20 border-slate-800">
-        <h1 className="text-4xl font-black text-center text-white" style={{ fontWeight: '900', opacity: '0.75' }}>THE CLOCK</h1>
+    <main
+      className="min-h-screen premium-bg text-[color:var(--foreground)]"
+      data-clock-font={clockFont}
+    >
+      <div className="ambient-orbs" aria-hidden="true" />
+      <div className="relative z-10">
+        <header className="premium-header">
+          <div className="app-shell py-6 flex flex-col gap-4">
+            <div className="relative flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[color:var(--accent-strong)] to-[color:var(--accent-2)] shadow-lg" />
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--muted)]">Chrono Suite</p>
+                  <h1 className="text-2xl md:text-3xl font-display title-glow">The Clock</h1>
+                </div>
+              </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            <button
-              className={`px-2 py-1 text-sm rounded border ${
-                tab === "clock" ? "bg-[#FFEDDF] text-slate-900" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
-              }`}
-              onClick={() => setTab("clock")}
-            >
-              Clock
-            </button>
+              <nav className="flex w-full flex-wrap items-center justify-center gap-6 md:absolute md:left-1/2 md:w-auto md:-translate-x-1/2">
+                <button
+                  type="button"
+                  className="nav-link"
+                  data-active={tab === "clock"}
+                  onClick={() => setTab("clock")}
+                >
+                  Clock
+                </button>
 
-            <button
-              className={`px-2 py-1 text-sm rounded border ${
-                tab === "counter" ? "bg-[#FFEDDF] text-slate-900" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
-              }`}
-              onClick={() => setTab("counter")}
-            >
-              Counter
-            </button>
+                <button
+                  type="button"
+                  className="nav-link"
+                  data-active={tab === "counter"}
+                  onClick={() => setTab("counter")}
+                >
+                  Counter
+                </button>
 
-            <button
-              className={`px-2 py-1 text-sm rounded border ${
-                tab === "tasks" ? "bg-[#FFEDDF] text-slate-900" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
-              }`}
-              onClick={() => setTab("tasks")}
-            >
-              Tasks
-            </button>
+                <button
+                  type="button"
+                  className="nav-link"
+                  data-active={tab === "tasks"}
+                  onClick={() => setTab("tasks")}
+                >
+                  Tasks
+                </button>
 
-            <button
-              className={`px-2 py-1 text-sm rounded border ${
-                tab === "analytics" ? "bg-[#FFEDDF] text-slate-900" : "bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700"
-              }`}
-              onClick={() => setTab("analytics")}
-            >
-              Analytics
-            </button>
+                <button
+                  type="button"
+                  className="nav-link"
+                  data-active={tab === "analytics"}
+                  onClick={() => setTab("analytics")}
+                >
+                  Analytics
+                </button>
+              </nav>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <label className="font-medium">Background:</label>
-            <label className="px-2 py-1 text-xs rounded border bg-[#FFEDDF] text-slate-900 cursor-pointer hover:bg-orange-100 transition">
-              Choose File
-              <input
-                type="file"
-                accept="image/*,video/*"
-                onChange={handleBackgroundChange}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <section className="p-6 bg-slate-950">
-        {tab === "clock" && (
-          <ClockPanel
-            backgroundUrl={backgroundUrl}
-            backgroundType={backgroundType}
-            overlayOpacity={overlayOpacity}
-            backgroundOpacity={backgroundOpacity}
-            theme={theme}
-            onOpacityChange={setOverlayOpacity}
-            onBackgroundOpacityChange={setBackgroundOpacity}
-            onThemeChange={setTheme}
-          />
-        )}
-        {tab === "counter" && (
-          <CounterPanel
-            backgroundUrl={backgroundUrl}
-            backgroundType={backgroundType}
-            overlayOpacity={overlayOpacity}
-            backgroundOpacity={backgroundOpacity}
-            theme={theme}
-            onOpacityChange={setOverlayOpacity}
-            onBackgroundOpacityChange={setBackgroundOpacity}
-            onThemeChange={setTheme}
-            currentProgressTask={currentProgressTask}
-            onTaskSessionComplete={(duration) => {
-              if (currentProgressTask) {
-                window.localStorage.setItem(
-                  "pending_session",
-                  JSON.stringify({
-                    taskId: currentProgressTask.id,
-                    duration,
-                  })
-                );
-              }
-            }}
-            isActive={tab === "counter"}
-          />
-        )}
-        {tab === "analytics" && (
-          <AnalyticsPanel />
-        )}
-        {tab === "tasks" && (
-          <TasksPanel />
-        )}
-      </section>
+        <section className="app-shell pb-10">
+          <div className="mt-10 md:mt-14">
+            {tab === "clock" && (
+              <div className="animate-fade">
+                <ClockPanel
+                  backgroundUrl={backgroundUrl}
+                  backgroundType={backgroundType}
+                  overlayOpacity={overlayOpacity}
+                  backgroundOpacity={backgroundOpacity}
+                  theme={theme}
+                  onOpacityChange={setOverlayOpacity}
+                  onBackgroundOpacityChange={setBackgroundOpacity}
+                  onThemeChange={setTheme}
+                  clockFont={clockFont}
+                  onClockFontChange={setClockFont}
+                  onBackgroundChange={handleBackgroundChange}
+                />
+              </div>
+            )}
+            {tab === "counter" && (
+              <div className="animate-fade">
+                <CounterPanel
+                  backgroundUrl={backgroundUrl}
+                  backgroundType={backgroundType}
+                  overlayOpacity={overlayOpacity}
+                  backgroundOpacity={backgroundOpacity}
+                  theme={theme}
+                  onOpacityChange={setOverlayOpacity}
+                  onBackgroundOpacityChange={setBackgroundOpacity}
+                  onThemeChange={setTheme}
+                  clockFont={clockFont}
+                  onClockFontChange={setClockFont}
+                  onBackgroundChange={handleBackgroundChange}
+                  currentProgressTask={currentProgressTask}
+                  onTaskSessionComplete={(duration) => {
+                    if (currentProgressTask) {
+                      window.localStorage.setItem(
+                        "pending_session",
+                        JSON.stringify({
+                          taskId: currentProgressTask.id,
+                          duration,
+                        })
+                      );
+                    }
+                  }}
+                  isActive={tab === "counter"}
+                />
+              </div>
+            )}
+            {tab === "analytics" && (
+              <div className="animate-fade">
+                <AnalyticsPanel />
+              </div>
+            )}
+            {tab === "tasks" && (
+              <div className="animate-fade">
+                <TasksPanel />
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
