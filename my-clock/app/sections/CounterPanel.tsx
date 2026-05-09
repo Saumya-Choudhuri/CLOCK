@@ -151,7 +151,7 @@ export default function CounterPanel({
         lastDataStr = taskData;
         try {
           const data = JSON.parse(taskData);
-          const loadedTasks = (data.tasks || []).map((task: Task) => ({
+          const loadedTasks: Task[] = (data.tasks || []).map((task: Task) => ({
             ...task,
             sessions: task.sessions || [],
             notes: task.notes || [],
@@ -161,7 +161,7 @@ export default function CounterPanel({
           // Ensure a task is selected
           if (loadedTasks.length > 0) {
             setSelectedTaskId((prevId) => {
-              if (prevId && loadedTasks.some((task) => task.id === prevId)) {
+              if (prevId && loadedTasks.some((task: Task) => task.id === prevId)) {
                 return prevId;
               }
               return loadedTasks[0].id;
