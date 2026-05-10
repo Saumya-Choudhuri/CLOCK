@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 type IdleOptions = { timeoutMs?: number };
-const DEFAULT_TIMEOUT = 30_000;
+// 15 minutes in milliseconds
+const DEFAULT_TIMEOUT = 15 * 60 * 1000;
 export function useIdleTimer({ timeoutMs = DEFAULT_TIMEOUT}: IdleOptions = {}){
     const [isIdle, setIsIdle] = useState(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);

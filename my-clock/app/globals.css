@@ -11,7 +11,7 @@
   --panel-2: #0f172a;
   --border: rgba(217, 180, 111, 0.2);
   --shadow: 0 22px 60px rgba(2, 6, 23, 0.55);
-  --clock-font: var(--font-display);
+  --clock-font: var(--font-sora);
 }
 
 @theme inline {
@@ -87,7 +87,7 @@ h3,
 }
 
 .clock-font {
-  font-family: var(--clock-font), serif;
+  font-family: var(--clock-font), sans-serif;
 }
 
 .premium-bg {

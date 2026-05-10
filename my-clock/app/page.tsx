@@ -5,6 +5,7 @@ import ClockPanel from "./sections/ClockPanel";
 import CounterPanel from "./sections/CounterPanel";
 import AnalyticsPanel from "./sections/AnalyticsPanel";
 import TasksPanel from "./sections/TasksPanel";
+import { UserHeader } from "./components/UserHeader";
 
 type Tab = "clock" | "counter" | "analytics" | "tasks";
 type ClockFont = "display" | "grotesk" | "sora" | "mono";
@@ -119,8 +120,8 @@ export default function Home() {
     >
       <div className="ambient-orbs" aria-hidden="true" />
       <div className="relative z-10">
-        <header className="premium-header">
-          <div className="app-shell py-6 flex flex-col gap-4">
+        <header className="premium-header relative z-50 overflow-visible">
+          <div className="app-shell py-10 md:py-14 flex flex-col gap-6">
             <div className="relative flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[color:var(--accent-strong)] to-[color:var(--accent-2)] shadow-lg" />
@@ -128,6 +129,10 @@ export default function Home() {
                   <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--muted)]">Chrono Suite</p>
                   <h1 className="text-2xl md:text-3xl font-display title-glow">The Clock</h1>
                 </div>
+              </div>
+
+              <div className="ml-auto flex items-center">
+                <UserHeader />
               </div>
 
               <nav className="flex w-full flex-wrap items-center justify-center gap-6 md:absolute md:left-1/2 md:w-auto md:-translate-x-1/2">
