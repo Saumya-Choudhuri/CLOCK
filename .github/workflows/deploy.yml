@@ -6,37 +6,56 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        # Pull the repository contents so the build step can run from the app folder.
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        # Use a modern Node runtime for Next.js builds and to avoid the Node 20 deprecation path.
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'my-clock/package-lock.json'
 
       - name: Install dependencies
+        # Install the app dependencies before running the production build.
         working-directory: ./my-clock
         run: npm install
 
       - name: Build
+        # Next is configured for static export, so this produces the final out/ directory.
         working-directory: ./my-clock
         run: npm run build
 
-      - name: Deploy
-        uses: crazy-max/ghaction-github-pages@v4
+      - name: Setup Pages
+        # Prepare GitHub Pages metadata for an artifact-based deploy.
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        # Upload the generated static site so GitHub can publish it as Pages content.
+        uses: actions/upload-pages-artifact@v3
         with:
-          target_branch: gh-pages
-          build_dir: my-clock/out
-          jekyll: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          path: ./my-clock/out
+
+      - name: Deploy
+        # Publish the uploaded artifact to the Pages environment.
+        id: deployment
+        uses: actions/deploy-pages@v4
 
