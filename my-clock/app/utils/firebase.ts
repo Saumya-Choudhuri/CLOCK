@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import type { Auth } from "firebase/auth";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -14,9 +15,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
-let auth;
-let db;
+let app: ReturnType<typeof initializeApp>;
+let auth: Auth;
+let db: ReturnType<typeof getFirestore>;
 
 try {
   app = initializeApp(firebaseConfig);
