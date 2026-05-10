@@ -14,18 +14,11 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
 };
 
-// Initialize Firebase
-let app: ReturnType<typeof initializeApp>;
-let auth: Auth;
-let db: ReturnType<typeof getFirestore>;
-
-try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-} catch (error) {
-  console.error("Failed to initialize Firebase:", error);
-}
+// Initialize Firebase once so the app, auth, and database handles are always defined.
+// The config values come from environment variables during local development and GitHub Actions.
+const app = initializeApp(firebaseConfig);
+const auth: Auth = getAuth(app);
+const db = getFirestore(app);
 
 export { auth, db, RecaptchaVerifier, signInWithPhoneNumber };
 export default app;
