@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { initializeFirebase } from "@/app/utils/firebase";
+import { getFirebaseInstance } from "@/app/utils/firebase";
 import {
   signInWithPopup,
   GoogleAuthProvider,
@@ -39,13 +39,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { auth } = initializeFirebase();
-    if (!auth) {
+    const firebaseInstance = getFirebaseInstance();
+    if (!firebaseInstance?.auth) {
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+    const unsubscribe = onAuthStateChanged(firebaseInstance.auth, async (authUser) => {
       if (authUser) {
         setUser(authUser);
         // Fetch user data from localStorage for now (we'll migrate to Firestore later)
@@ -64,12 +64,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const { auth } = initializeFirebase();
-    if (!auth) throw new Error("Firebase not initialized");
+    const firebaseInstance = getFirebaseInstance();
+    if (!firebaseInstance?.auth) {
+      throw new Error("Firebase is not available. Please try again later.");
+    }
     
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(firebaseInstance.auth, provider);
       await createUserProfile({
         email: result.user.email || undefined,
       });
@@ -104,11 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOutUser = async () => {
-    const { auth } = initializeFirebase();
-    if (!auth) throw new Error("Firebase not initialized");
+    const firebaseInstance = getFirebaseInstance();
+    if (!firebaseInstance?.auth) {
+      throw new Error("Firebase is not available. Please try again later.");
+    }
     
     try {
-      await signOut(auth);
+      await signOut(firebaseInstance.auth);
       setUser(null);
       setUserData(null);
     } catch (error) {

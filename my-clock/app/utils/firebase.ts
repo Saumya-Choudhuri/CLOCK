@@ -14,29 +14,33 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
 };
 
-// Lazy initialization to avoid errors during static build
-let app: any = null;
-let auth: Auth | null = null;
-let db: any = null;
+// Lazy singleton for client-side Firebase initialization
+let firebaseInstance: {
+  app: any;
+  auth: Auth;
+  db: any;
+} | null = null;
 
-const initializeFirebase = () => {
+export const getFirebaseInstance = () => {
   if (typeof window === "undefined") {
     // Server-side: don't initialize
-    return { app: null, auth: null, db: null };
+    return null;
   }
   
-  if (!app) {
+  if (!firebaseInstance) {
     try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      firebaseInstance = { app, auth, db };
     } catch (error) {
       console.error("Firebase initialization failed:", error);
+      return null;
     }
   }
   
-  return { app, auth, db };
+  return firebaseInstance;
 };
 
-export { RecaptchaVerifier, signInWithPhoneNumber, initializeFirebase };
-export default { initializeFirebase };
+export { RecaptchaVerifier, signInWithPhoneNumber };
+export default { getFirebaseInstance };
