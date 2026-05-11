@@ -14,11 +14,29 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
 };
 
-// Initialize Firebase once so the app, auth, and database handles are always defined.
-// The config values come from environment variables during local development and GitHub Actions.
-const app = initializeApp(firebaseConfig);
-const auth: Auth = getAuth(app);
-const db = getFirestore(app);
+// Lazy initialization to avoid errors during static build
+let app: any = null;
+let auth: Auth | null = null;
+let db: any = null;
 
-export { auth, db, RecaptchaVerifier, signInWithPhoneNumber };
-export default app;
+const initializeFirebase = () => {
+  if (typeof window === "undefined") {
+    // Server-side: don't initialize
+    return { app: null, auth: null, db: null };
+  }
+  
+  if (!app) {
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+    } catch (error) {
+      console.error("Firebase initialization failed:", error);
+    }
+  }
+  
+  return { app, auth, db };
+};
+
+export { RecaptchaVerifier, signInWithPhoneNumber, initializeFirebase };
+export default { initializeFirebase };

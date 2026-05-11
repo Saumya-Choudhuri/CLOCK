@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { auth } from "@/app/utils/firebase";
+import { initializeFirebase } from "@/app/utils/firebase";
 import {
   signInWithPopup,
   GoogleAuthProvider,
@@ -39,6 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const { auth } = initializeFirebase();
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         setUser(authUser);
@@ -58,6 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    const { auth } = initializeFirebase();
+    if (!auth) throw new Error("Firebase not initialized");
+    
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -95,6 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOutUser = async () => {
+    const { auth } = initializeFirebase();
+    if (!auth) throw new Error("Firebase not initialized");
+    
     try {
       await signOut(auth);
       setUser(null);
