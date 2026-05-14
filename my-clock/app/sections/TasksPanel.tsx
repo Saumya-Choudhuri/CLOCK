@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getProgressDiagnostics } from "../utils/progressDiagnostics";
+import { useAuth } from "../context/AuthContext";
 
 interface TaskSession {
   startTime: number;
@@ -30,6 +31,11 @@ export default function TasksPanel() {
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
   const diagnosticsRef = useRef<string>("");
+  const { userData, checkFreeTrial, checkPremiumAccess } = useAuth();
+  const [guestTrialStart, setGuestTrialStart] = useState<number | null>(null);
+
+  const TRIAL_DAYS = 7;
+  const TRIAL_TASK_LIMIT = 7;
 
   const saveProgressData = useCallback((updatedTasks: Task[]) => {
     try {
@@ -105,6 +111,23 @@ export default function TasksPanel() {
     };
   }, []);
 
+  useEffect(() => {
+    if (userData) return;
+    try {
+      const stored = window.localStorage.getItem("guest_trial_start");
+      if (stored) {
+        setGuestTrialStart(Number(stored));
+        return;
+      }
+
+      const now = Date.now();
+      window.localStorage.setItem("guest_trial_start", String(now));
+      setGuestTrialStart(now);
+    } catch (error) {
+      console.error("Failed to initialize guest trial:", error);
+    }
+  }, [userData]);
+
   // Save tasks to localStorage
   useEffect(() => {
     if (!hasLoaded) return;
@@ -140,6 +163,27 @@ export default function TasksPanel() {
   const calculateNotesDuration = (task: Task): number => {
     return task.notes.reduce((sum, note) => sum + note.duration, 0);
   };
+
+  const trialStart = userData?.signupDate ?? guestTrialStart;
+  const trialDaysRemaining = trialStart
+    ? Math.max(
+        0,
+        TRIAL_DAYS -
+          Math.floor((Date.now() - trialStart) / (1000 * 60 * 60 * 24))
+      )
+    : TRIAL_DAYS;
+  const isTrialActive = userData ? checkFreeTrial() : trialDaysRemaining > 0;
+  const premiumUntil = userData?.premiumUntil;
+  const isPremiumActive = checkPremiumAccess();
+  const premiumDaysRemaining = premiumUntil
+    ? Math.max(0, Math.ceil((premiumUntil - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const canAddTask = isPremiumActive || (isTrialActive && tasks.length < TRIAL_TASK_LIMIT);
+  const statusMessage = isPremiumActive
+    ? `Monthly Premium active • ${premiumDaysRemaining} days left`
+    : isTrialActive
+      ? `Free trial: ${trialDaysRemaining} days left • ${TRIAL_TASK_LIMIT} tasks max`
+      : "Trial ended • Upgrade to Monthly Premium for unlimited tasks";
 
   // Format milliseconds to hours and minutes
   const formatDuration = (ms: number): string => {
@@ -191,25 +235,30 @@ export default function TasksPanel() {
         {/* Main Tasks Section */}
         <div className="panel-surface p-6 space-y-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-2">
-            <h2 className="text-2xl font-bold text-white">Your Tasks</h2>
-            {tasks.length < 10 && (
-              <button
-                onClick={() => {
-                  const newTask: Task = {
-                    id: Date.now().toString(),
-                    name: `Task ${tasks.length + 1}`,
-                    sessions: [],
-                    notes: [],
-                    isRunning: false,
-                    currentSessionStart: null,
-                  };
-                  setTasks([...tasks, newTask]);
-                }}
-                className="btn btn-primary px-4 py-2 text-sm"
-              >
-                + Add New Task
-              </button>
-            )}
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold text-white">Your Tasks</h2>
+              <p className="text-xs text-[color:var(--muted)]">{statusMessage}</p>
+            </div>
+            <button
+              onClick={() => {
+                if (!canAddTask) return;
+                const newTask: Task = {
+                  id: Date.now().toString(),
+                  name: `Task ${tasks.length + 1}`,
+                  sessions: [],
+                  notes: [],
+                  isRunning: false,
+                  currentSessionStart: null,
+                };
+                setTasks([...tasks, newTask]);
+              }}
+              disabled={!canAddTask}
+              className={`btn btn-primary px-4 py-2 text-sm ${
+                !canAddTask ? "opacity-60 cursor-not-allowed" : ""
+              }`}
+            >
+              + Add New Task
+            </button>
           </div>
 
           {tasks.length === 0 ? (

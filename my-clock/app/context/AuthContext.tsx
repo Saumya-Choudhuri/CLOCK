@@ -17,6 +17,7 @@ interface UserData {
   phone?: string;
   signupDate: number;
   isPremium: boolean;
+  premiumUntil?: number;
   lastActivityDate: number;
   taskHistory: any[];
 }
@@ -25,13 +26,21 @@ interface AuthContextType {
   user: FirebaseUser | null;
   userData: UserData | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<FirebaseUser>;
   signOutUser: () => Promise<void>;
-  createUserProfile: (additionalData?: Partial<UserData>) => Promise<void>;
+  createUserProfile: (
+    additionalData?: Partial<UserData>,
+    userOverride?: FirebaseUser
+  ) => Promise<void>;
   checkFreeTrial: () => boolean;
+  checkPremiumAccess: () => boolean;
+  activateMonthlyPremium: (userOverride?: FirebaseUser) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const TRIAL_DAYS = 7;
+const PREMIUM_MONTH_DAYS = 30;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -72,37 +81,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(firebaseInstance.auth, provider);
-      await createUserProfile({
-        email: result.user.email || undefined,
-      });
+      setUser(result.user);
+      await createUserProfile(
+        {
+          email: result.user.email || undefined,
+        },
+        result.user
+      );
+      return result.user;
     } catch (error) {
       console.error("Google sign-in failed:", error);
       throw error;
     }
   };
 
-  const createUserProfile = async (additionalData?: Partial<UserData>) => {
-    if (!user) return;
+  const createUserProfile = async (
+    additionalData?: Partial<UserData>,
+    userOverride?: FirebaseUser
+  ) => {
+    const activeUser = userOverride ?? user;
+    if (!activeUser) return;
 
-    const newUserData: UserData = {
-      uid: user.uid,
-      email: user.email || undefined,
-      phone: user.phoneNumber || undefined,
+    const storedData = localStorage.getItem(`user_${activeUser.uid}`);
+    const existingData = storedData ? JSON.parse(storedData) : null;
+
+    const baseData: UserData = existingData || {
+      uid: activeUser.uid,
+      email: activeUser.email || undefined,
+      phone: activeUser.phoneNumber || undefined,
       signupDate: Date.now(),
       isPremium: false,
       lastActivityDate: Date.now(),
       taskHistory: [],
-      ...additionalData,
     };
 
-    setUserData(newUserData);
-    localStorage.setItem(`user_${user.uid}`, JSON.stringify(newUserData));
+    const updatedUserData: UserData = {
+      ...baseData,
+      ...additionalData,
+      lastActivityDate: Date.now(),
+    };
+
+    setUserData(updatedUserData);
+    localStorage.setItem(`user_${activeUser.uid}`, JSON.stringify(updatedUserData));
   };
 
   const checkFreeTrial = (): boolean => {
     if (!userData) return false;
     const daysSinceSignup = (Date.now() - userData.signupDate) / (1000 * 60 * 60 * 24);
-    return daysSinceSignup < 21;
+    return daysSinceSignup < TRIAL_DAYS;
+  };
+
+  const checkPremiumAccess = (): boolean => {
+    if (!userData?.isPremium || !userData.premiumUntil) return false;
+    return Date.now() < userData.premiumUntil;
+  };
+
+  const activateMonthlyPremium = async (userOverride?: FirebaseUser) => {
+    const activeUser = userOverride ?? user;
+    if (!activeUser) {
+      throw new Error("Please sign in to activate Monthly Premium.");
+    }
+
+    const storedData = localStorage.getItem(`user_${activeUser.uid}`);
+    const existingData = storedData ? JSON.parse(storedData) : null;
+
+    const baseData: UserData = existingData || {
+      uid: activeUser.uid,
+      email: activeUser.email || undefined,
+      phone: activeUser.phoneNumber || undefined,
+      signupDate: Date.now(),
+      isPremium: false,
+      lastActivityDate: Date.now(),
+      taskHistory: [],
+    };
+
+    const premiumUntil = Date.now() + PREMIUM_MONTH_DAYS * 24 * 60 * 60 * 1000;
+
+    const updatedUserData: UserData = {
+      ...baseData,
+      isPremium: true,
+      premiumUntil,
+      lastActivityDate: Date.now(),
+    };
+
+    setUserData(updatedUserData);
+    localStorage.setItem(`user_${activeUser.uid}`, JSON.stringify(updatedUserData));
   };
 
   const signOutUser = async () => {
@@ -131,6 +194,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOutUser,
         createUserProfile,
         checkFreeTrial,
+        checkPremiumAccess,
+        activateMonthlyPremium,
       }}
     >
       {children}

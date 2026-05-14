@@ -183,7 +183,7 @@ export function UsernameModal({ isOpen, onClose }: UsernameModalProps) {
         </div>
 
         <p className="text-xs text-[color:var(--muted)] text-center mt-4">
-          ✓ Free 21-day trial • Multiple accounts • Same email
+          ✓ Free 7-day trial • Multiple accounts • Same email
         </p>
       </div>
     </div>

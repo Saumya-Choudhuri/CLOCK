@@ -9,6 +9,7 @@ export interface UserProfile {
   phone?: string;
   signupDate: number;
   isPremium: boolean;
+  premiumUntil?: number;
   lastActivityDate: number;
   taskHistory: TaskEntry[];
 }
@@ -28,7 +29,7 @@ export interface TaskEntry {
  * @returns Days remaining (0 if trial expired)
  */
 export function getDaysRemainingInTrial(signupDate: number): number {
-  const TRIAL_DAYS = 21;
+  const TRIAL_DAYS = 7;
   const daysSinceSignup = Math.floor((Date.now() - signupDate) / (1000 * 60 * 60 * 24));
   return Math.max(0, TRIAL_DAYS - daysSinceSignup);
 }
