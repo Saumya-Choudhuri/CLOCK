@@ -260,7 +260,7 @@ export default function ProgressPanel({
     <div className="max-w-4xl mx-auto space-y-8 flex flex-col items-center">
       {showNameInput ? (
         <div className="panel-surface p-6 space-y-4 w-full max-w-md text-center">
-          <h2 className="text-2xl font-bold text-white">Welcome to Progress Tracker</h2>
+          <h2 className="text-2xl font-bold text-[color:var(--foreground)]">Welcome to Progress Tracker</h2>
           <input
             type="text"
             placeholder="Enter your name"
@@ -284,7 +284,7 @@ export default function ProgressPanel({
       ) : (
         <>
           <div className="flex flex-col items-center justify-center w-full gap-4">
-            <h2 className="text-2xl font-bold text-white">{userName}&apos;s Progress</h2>
+            <h2 className="text-2xl font-bold text-[color:var(--foreground)]">{userName}&apos;s Progress</h2>
           </div>
 
           {/* Add Task and Change Name Buttons */}
@@ -358,8 +358,8 @@ export default function ProgressPanel({
                   </div>
 
                   <div className="text-sm text-[color:var(--muted)]">
-                    <p>Total Time: <span className="clock-font tabular-nums text-white">{getTotalTime(task)}</span></p>
-                    <p>Sessions: <span className="clock-font tabular-nums text-white">{task.sessions.length}</span></p>
+                    <p>Total Time: <span className="clock-font tabular-nums text-[color:var(--foreground)]">{getTotalTime(task)}</span></p>
+                    <p>Sessions: <span className="clock-font tabular-nums text-[color:var(--foreground)]">{task.sessions.length}</span></p>
                   </div>
 
                   {task.sessions.length > 0 && (
@@ -410,7 +410,7 @@ export default function ProgressPanel({
                             className="flex items-center justify-between card-surface p-2 text-[color:var(--muted)]"
                           >
                             <div className="flex-1">
-                              <span className="text-white font-medium">{note.description}</span>
+                              <span className="text-[color:var(--foreground)] font-medium">{note.description}</span>
                               <span className="ml-2 text-[color:var(--muted)]">
                                 {hours}h {minutes}m {secs}s
                               </span>

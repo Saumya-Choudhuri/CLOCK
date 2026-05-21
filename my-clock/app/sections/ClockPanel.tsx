@@ -85,7 +85,8 @@ export default function ClockPanel({
   return (
     <div className="space-y-4">
       <div
-        className="premium-panel premium-frame h-[70vh]"
+        className="premium-panel premium-frame clock-stage h-[70vh]"
+        data-theme={theme}
         ref={timerRef}
         style={isFullscreen ? { height: "100vh", borderRadius: 0 } : {}}
       >
@@ -160,14 +161,14 @@ export default function ClockPanel({
 
           <div className="flex items-center gap-2">
             <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">
-              Clock Font:
+              Typeface:
             </label>
             <select
               value={clockFont}
               onChange={(e) => onClockFontChange?.(e.target.value as ClockFont)}
               className="select-premium w-auto text-xs"
             >
-              <option value="display">Cormorant</option>
+              <option value="display">Syne</option>
               <option value="grotesk">Space Grotesk</option>
               <option value="sora">Sora</option>
               <option value="mono">JetBrains Mono</option>

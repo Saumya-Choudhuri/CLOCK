@@ -426,10 +426,15 @@ export default function CounterPanel({
     return () => clearTick();
   }, []);
 
+  const timeColor = theme === "light" ? "var(--clock-ink)" : "var(--clock-ink-inverse)";
+  const secondaryColor =
+    theme === "light" ? "var(--clock-subtle)" : "var(--clock-subtle-inverse)";
+
   return (
     <div className="space-y-4">
       <div
-        className="premium-panel premium-frame h-[70vh]"
+        className="premium-panel premium-frame clock-stage h-[70vh]"
+        data-theme={theme}
         ref={timerRef}
         style={isFullscreen ? { height: "100vh", borderRadius: 0 } : {}}
       >
@@ -506,14 +511,14 @@ export default function CounterPanel({
 
           <div className="flex items-center gap-2">
             <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">
-              Clock Font:
+              Typeface:
             </label>
             <select
               value={clockFont}
               onChange={(e) => onClockFontChange?.(e.target.value as ClockFont)}
               className="select-premium w-auto text-xs"
             >
-              <option value="display">Cormorant</option>
+              <option value="display">Syne</option>
               <option value="grotesk">Space Grotesk</option>
               <option value="sora">Sora</option>
               <option value="mono">JetBrains Mono</option>
@@ -585,7 +590,6 @@ export default function CounterPanel({
                   value={selectedTaskId}
                   onChange={(e) => setSelectedTaskId(e.target.value)}
                   className="select-premium w-auto text-sm cursor-pointer"
-                  style={{ color: theme === "light" ? "#ffffff" : "#0f172a" }}
                 >
                   {tasks.map((task) => (
                     <option key={task.id} value={task.id} style={{ color: "#000" }}>
@@ -597,17 +601,17 @@ export default function CounterPanel({
             )}
 
             {currentProgressTask && (
-              <div className="text-sm text-[color:var(--muted)] mb-2">
-                Legacy: <span className="text-white font-semibold">{currentProgressTask.name}</span>
+              <div className="text-sm mb-2" style={{ color: secondaryColor }}>
+                Legacy: <span className="font-semibold" style={{ color: timeColor }}>{currentProgressTask.name}</span>
               </div>
             )}
             
             {preCount != null ? (
-              <div className="text-7xl md:text-8xl clock-font font-semibold time-glow" style={{ color: theme === "light" ? "#ffffff" : "#0f172a" }}>
+              <div className="text-7xl md:text-8xl clock-font font-semibold time-glow" style={{ color: timeColor }}>
                 {preCount}
               </div>
             ) : (
-              <div className="text-7xl md:text-8xl clock-font font-semibold tabular-nums time-glow" style={{ color: theme === "light" ? "#ffffff" : "#0f172a" }}>
+              <div className="text-7xl md:text-8xl clock-font font-semibold tabular-nums time-glow" style={{ color: timeColor }}>
                 {formatMs(elapsedMs)}
               </div>
             )}
@@ -648,9 +652,9 @@ export default function CounterPanel({
 
       {/* Note Modal */}
       {showNoteModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
           <div className="panel-surface p-6 max-w-md w-full space-y-4">
-            <h2 className="text-xl font-bold text-white">Add a Note</h2>
+            <h2 className="text-xl font-bold text-[color:var(--foreground)]">Add a Note</h2>
             
             {tasks.length === 0 ? (
               <div className="card-surface p-3 text-sm text-[color:var(--muted)]">
@@ -687,8 +691,8 @@ export default function CounterPanel({
 
                 <div className="space-y-2">
                   <label className="block text-sm text-[color:var(--muted)]">Time Spent (from counter)</label>
-                  <div className="flex gap-2 items-center px-3 py-2 rounded bg-[rgba(10,15,24,0.7)] border border-[rgba(217,180,111,0.25)]">
-                    <span className="text-lg clock-font tabular-nums text-white">{formatMs(elapsedMs)}</span>
+                  <div className="card-surface flex gap-2 items-center px-3 py-2">
+                    <span className="text-lg clock-font tabular-nums text-[color:var(--foreground)]">{formatMs(elapsedMs)}</span>
                   </div>
                   <p className="text-xs text-[color:var(--muted)]">
                     Timer is paused while adding a note

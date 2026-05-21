@@ -220,7 +220,7 @@ export default function TasksPanel() {
   };
 
   return (
-    <div className="text-white">
+    <div className="text-[color:var(--foreground)]">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--muted)]">
@@ -236,7 +236,7 @@ export default function TasksPanel() {
         <div className="panel-surface p-6 space-y-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-2">
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold text-white">Your Tasks</h2>
+              <h2 className="text-2xl font-bold text-[color:var(--foreground)]">Your Tasks</h2>
               <p className="text-xs text-[color:var(--muted)]">{statusMessage}</p>
             </div>
             <button
@@ -294,15 +294,15 @@ export default function TasksPanel() {
                   <div className="grid grid-cols-3 gap-3 text-sm">
                     <div className="stat-card">
                       <div className="text-[color:var(--muted)] text-xs uppercase tracking-wide">Duration</div>
-                      <div className="text-white clock-font tabular-nums text-lg">{formatDuration(calculateTaskDuration(task))}</div>
+                      <div className="text-[color:var(--foreground)] clock-font tabular-nums text-lg">{formatDuration(calculateTaskDuration(task))}</div>
                     </div>
                     <div className="stat-card" data-tone="teal">
                       <div className="text-[color:var(--muted)] text-xs uppercase tracking-wide">Notes</div>
-                      <div className="text-white clock-font tabular-nums text-lg">{task.notes.length}</div>
+                      <div className="text-[color:var(--foreground)] clock-font tabular-nums text-lg">{task.notes.length}</div>
                     </div>
                     <div className="stat-card" data-tone="sage">
                       <div className="text-[color:var(--muted)] text-xs uppercase tracking-wide">Avg/Note</div>
-                      <div className="text-white clock-font tabular-nums text-lg">
+                      <div className="text-[color:var(--foreground)] clock-font tabular-nums text-lg">
                         {task.notes.length > 0
                           ? formatDuration(calculateNotesDuration(task) / task.notes.length)
                           : "N/A"}
@@ -313,17 +313,17 @@ export default function TasksPanel() {
                   {(task.sessions.length > 0 || task.notes.length > 0) && (
                     <div className="text-xs text-[color:var(--muted)] pt-2 border-t border-[rgba(217,180,111,0.2)] space-y-1">
                       {task.sessions.length > 0 && (
-                        <div>Sessions recorded: <span className="text-white font-semibold">{task.sessions.length}</span></div>
+                        <div>Sessions recorded: <span className="text-[color:var(--foreground)] font-semibold">{task.sessions.length}</span></div>
                       )}
                       {task.notes.length > 0 && (
                         <button
                           onClick={() =>
                             setExpandedTaskId(expandedTaskId === task.id ? null : task.id)
                           }
-                          className="flex items-center gap-2 text-[color:var(--muted)] hover:text-white transition w-full"
+                          className="flex items-center gap-2 text-[color:var(--muted)] hover:text-[color:var(--foreground)] transition w-full"
                         >
                           <span>{expandedTaskId === task.id ? "▼" : "▶"}</span>
-                          <span>Notes: <span className="text-white font-semibold">{task.notes.length}</span></span>
+                          <span>Notes: <span className="text-[color:var(--foreground)] font-semibold">{task.notes.length}</span></span>
                         </button>
                       )}
                     </div>
@@ -331,7 +331,7 @@ export default function TasksPanel() {
 
                   {expandedTaskId === task.id && task.notes.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-[rgba(217,180,111,0.2)] space-y-2">
-                      <h4 className="font-semibold text-white text-sm">Notes ({task.notes.length})</h4>
+                      <h4 className="font-semibold text-[color:var(--foreground)] text-sm">Notes ({task.notes.length})</h4>
                       <div className="space-y-2 max-h-64 overflow-y-auto">
                         {task.notes.map((note, idx) => (
                           <div
@@ -339,7 +339,7 @@ export default function TasksPanel() {
                             className="card-surface p-3 text-sm"
                           >
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <span className="text-white font-medium">Note {idx + 1}</span>
+                              <span className="text-[color:var(--foreground)] font-medium">Note {idx + 1}</span>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-[color:var(--muted)]">{formatDate(note.createdAt)}</span>
                                 <button
@@ -353,7 +353,7 @@ export default function TasksPanel() {
                             </div>
                             <p className="text-[color:var(--muted)] mb-2">{note.description}</p>
                             <div className="text-xs text-[color:var(--muted)]">
-                              Duration: <span className="text-white clock-font tabular-nums">{formatDuration(note.duration)}</span>
+                              Duration: <span className="text-[color:var(--foreground)] clock-font tabular-nums">{formatDuration(note.duration)}</span>
                             </div>
                           </div>
                         ))}
@@ -369,27 +369,27 @@ export default function TasksPanel() {
         {/* Statistics Section */}
         {tasks.length > 0 && (
           <div className="panel-surface p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Quick Stats</h2>
+            <h2 className="text-xl font-bold text-[color:var(--foreground)] mb-4">Quick Stats</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="stat-card">
                 <div className="text-[color:var(--muted)] text-sm mb-1">Total Tasks</div>
-                <div className="text-3xl font-bold text-white">{tasks.length}</div>
+                <div className="text-3xl font-bold text-[color:var(--foreground)]">{tasks.length}</div>
               </div>
               <div className="stat-card" data-tone="teal">
                 <div className="text-[color:var(--muted)] text-sm mb-1">Total Time</div>
-                <div className="text-3xl font-bold text-white">
+                <div className="text-3xl font-bold text-[color:var(--foreground)]">
                   {formatDuration(tasks.reduce((sum, task) => sum + calculateTaskDuration(task), 0))}
                 </div>
               </div>
               <div className="stat-card" data-tone="sage">
                 <div className="text-[color:var(--muted)] text-sm mb-1">Total Sessions</div>
-                <div className="text-3xl font-bold text-white">
+                <div className="text-3xl font-bold text-[color:var(--foreground)]">
                   {tasks.reduce((sum, task) => sum + task.sessions.length, 0)}
                 </div>
               </div>
               <div className="stat-card" data-tone="clay">
                 <div className="text-[color:var(--muted)] text-sm mb-1">Total Notes</div>
-                <div className="text-3xl font-bold text-white">
+                <div className="text-3xl font-bold text-[color:var(--foreground)]">
                   {tasks.reduce((sum, task) => sum + task.notes.length, 0)}
                 </div>
               </div>

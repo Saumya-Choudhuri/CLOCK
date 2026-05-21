@@ -90,17 +90,28 @@ export function UserHeader() {
       )
     : 0;
   const trialProgress = userData ? Math.min(100, (daysRemaining / TRIAL_DAYS) * 100) : 0;
-  const subscriptionLabel = isPremiumActive ? "Monthly Premium" : "Free Trial";
+  const isTrialActive = Boolean(!isPremiumActive && daysRemaining > 0);
+  const subscriptionLabel = isPremiumActive
+    ? "Monthly Premium"
+    : isTrialActive
+      ? "Free Trial"
+      : "Trial ended";
   const subscriptionDays = isPremiumActive ? premiumDaysRemaining : daysRemaining;
   const subscriptionProgress = isPremiumActive
     ? Math.min(100, (premiumDaysRemaining / PREMIUM_MONTH_DAYS) * 100)
     : trialProgress;
+  const subscriptionDaysText = isPremiumActive || isTrialActive
+    ? `${subscriptionDays} days`
+    : "Expired";
+  const progressClass = isPremiumActive || isTrialActive
+    ? "bg-gradient-to-r from-[color:var(--foreground)] to-[color:var(--accent)]"
+    : "bg-[color:var(--muted)]";
 
   return (
     <div className="relative">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center justify-center h-10 w-10 rounded-full border border-[color:var(--border)] bg-[rgba(15,23,42,0.7)] text-[color:var(--accent-strong)] font-semibold text-sm shadow-[0_8px_22px_rgba(2,6,23,0.45)] transition-colors hover:border-[color:rgba(240,201,135,0.7)]"
+        className="flex items-center justify-center h-10 w-10 rounded-full border border-[color:var(--border)] bg-[rgba(255,255,255,0.85)] text-[color:var(--foreground)] font-semibold text-sm shadow-[0_10px_26px_rgba(13,15,18,0.15)] transition-colors hover:border-[color:rgba(13,15,18,0.45)]"
         title={displayName}
       >
         {userInitial}
@@ -108,8 +119,7 @@ export function UserHeader() {
 
       {showDropdown && (
         <div
-          className="absolute right-0 mt-3 w-64 panel-surface bg-[rgba(9,13,23,1)] shadow-[0_22px_60px_rgba(2,6,23,0.6)] z-50 overflow-hidden"
-          style={{ background: "rgba(9, 13, 23, 1)" }}
+          className="absolute right-0 mt-3 w-64 panel-surface shadow-[0_22px_60px_rgba(13,15,18,0.18)] z-50 overflow-hidden"
         >
           {user ? (
             <>
@@ -148,12 +158,12 @@ export function UserHeader() {
                           {subscriptionLabel}
                         </span>
                         <span className="text-xs font-semibold text-[color:var(--accent-strong)]">
-                          {subscriptionDays} days
+                          {subscriptionDaysText}
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-[rgba(217,180,111,0.15)]">
+                      <div className="w-full h-2 rounded-full bg-[rgba(13,15,18,0.08)]">
                         <div
-                          className="h-2 rounded-full bg-gradient-to-r from-[color:var(--accent-strong)] to-[color:var(--accent-2)]"
+                          className={`h-2 rounded-full ${progressClass}`}
                           style={{ width: `${subscriptionProgress}%` }}
                         />
                       </div>

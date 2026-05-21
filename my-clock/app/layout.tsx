@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, JetBrains_Mono, Sora, Space_Grotesk } from "next/font/google";
+import { JetBrains_Mono, Sora, Space_Grotesk, Syne } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
 import { AuthGuard } from "@/app/components/AuthGuard";
 
-const display = Cormorant_Garamond({
+const display = Syne({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["500", "600", "700", "800"],
 });
 
 const body = Space_Grotesk({

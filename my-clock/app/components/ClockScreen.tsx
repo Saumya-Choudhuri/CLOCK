@@ -37,13 +37,16 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
     });
   }, [now]);
 
+  const timeColor = theme === "light" ? "var(--clock-ink)" : "var(--clock-ink-inverse)";
+  const dateColor = theme === "light" ? "var(--clock-subtle)" : "var(--clock-subtle-inverse)";
+
   return (
     <div className="h-full w-full flex items-center justify-center">
       <div className="text-center">
         <div
           className="text-7xl md:text-8xl clock-font font-semibold tabular-nums time-glow"
           style={{
-            color: theme === "light" ? "#ffffff" : "#0f172a",
+            color: timeColor,
           }}
         >
           {time}
@@ -51,7 +54,7 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
         <div
           className="mt-4 text-xs uppercase tracking-[0.25em]"
           style={{
-            color: theme === "light" ? "#d4c7b6" : "#475569",
+            color: dateColor,
           }}
         >
           {date}

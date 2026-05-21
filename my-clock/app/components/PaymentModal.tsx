@@ -94,7 +94,7 @@ export function PaymentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
       <div className="premium-panel w-full max-w-md mx-4 p-8">
         <div className="mb-5">
           <h2 className="text-2xl font-display title-glow text-[color:var(--foreground)] mb-2">
