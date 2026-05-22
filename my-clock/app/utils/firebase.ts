@@ -1,7 +1,7 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, type FirebaseApp } from "firebase/app";
 import type { Auth } from "firebase/auth";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 // TODO: Replace with your Firebase config from Firebase Console
 // Get this from: https://console.firebase.google.com/
@@ -16,9 +16,9 @@ const firebaseConfig = {
 
 // Lazy singleton for client-side Firebase initialization
 let firebaseInstance: {
-  app: any;
+  app: FirebaseApp;
   auth: Auth;
-  db: any;
+  db: Firestore;
 } | null = null;
 
 export const getFirebaseInstance = () => {
@@ -43,4 +43,3 @@ export const getFirebaseInstance = () => {
 };
 
 export { RecaptchaVerifier, signInWithPhoneNumber };
-export default { getFirebaseInstance };

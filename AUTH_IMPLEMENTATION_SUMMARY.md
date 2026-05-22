@@ -46,7 +46,7 @@
 ### Step 1: Create Firebase Project (5 minutes)
 ```bash
 1. Go to https://console.firebase.google.com/
-2. Create new project named "CLOCK-App"
+2. Create new project named "Zoned-App"
 3. Enable Authentication → Google & Phone
 4. Copy config to .env.local
 ```

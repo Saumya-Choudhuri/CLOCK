@@ -14,9 +14,38 @@ interface PaymentModalProps {
   userName?: string;
 }
 
+type RazorpayHandlerResponse = {
+  razorpay_payment_id: string;
+  razorpay_order_id?: string;
+  razorpay_signature?: string;
+};
+
+type RazorpayOptions = {
+  key: string;
+  order_id: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  image?: string;
+  prefill?: {
+    email?: string;
+    contact?: string;
+    name?: string;
+  };
+  handler: (response: RazorpayHandlerResponse) => void;
+  modal?: {
+    ondismiss?: () => void;
+  };
+};
+
+type RazorpayConstructor = new (options: RazorpayOptions) => {
+  open: () => void;
+};
+
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: RazorpayConstructor;
   }
 }
 
@@ -58,7 +87,7 @@ export function PaymentModal({
       order_id: orderId,
       amount: 29900,
       currency: "INR",
-      name: "The Clock",
+      name: "Zoned",
       description: "Monthly Premium - INR 299 for 30 days",
       image: "https://www.example.com/logo.png",
       prefill: {
@@ -66,11 +95,11 @@ export function PaymentModal({
         contact: "",
         name: userName || "User",
       },
-      handler: async (response: any) => {
+      handler: async (response: RazorpayHandlerResponse) => {
         try {
           await onPaymentSuccess(response.razorpay_payment_id, orderId);
-        } catch (err) {
-          console.error("Payment success handler error:", err);
+        } catch (error) {
+          console.error("Payment success handler error:", error);
         } finally {
           setProcessing(false);
         }
@@ -85,8 +114,8 @@ export function PaymentModal({
     try {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
-    } catch (err) {
-      console.error("Razorpay error:", err);
+    } catch (error) {
+      console.error("Razorpay error:", error);
       setProcessing(false);
     }
   };

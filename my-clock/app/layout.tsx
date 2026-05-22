@@ -29,7 +29,7 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: "The Clock",
+  title: "Zoned",
   description: "Premium timekeeping, focus, and analytics suite.",
 };
 

@@ -1,4 +1,4 @@
-# CLOCK Project - Quick Reference Guide
+# Zoned Project - Quick Reference Guide
 
 ## Quick Start
 
@@ -20,7 +20,7 @@ npm start
 
 ## Feature Overview
 
-### 📱 Clock Panel
+### 📱 Zoned Panel
 - **Purpose**: Large, beautiful clock display
 - **Controls**: Fullscreen, brightness, theme, background opacity
 - **Best For**: Keeping time visible on secondary monitor

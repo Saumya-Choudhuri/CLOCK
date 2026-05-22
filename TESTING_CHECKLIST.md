@@ -29,7 +29,7 @@
 
 ### Core Functionality Tests
 
-- [ ] **Clock Panel**
+- [ ] **Zoned Panel**
   - [ ] Timer starts and stops correctly
   - [ ] Time displays in HH:MM:SS format
   - [ ] Fullscreen button works

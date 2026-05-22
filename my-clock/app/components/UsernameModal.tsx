@@ -8,6 +8,9 @@ interface UsernameModalProps {
   onClose: () => void;
 }
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
 export function UsernameModal({ isOpen, onClose }: UsernameModalProps) {
   const { createUserProfile } = useAuth();
   const [username, setUsername] = useState("");
@@ -52,7 +55,7 @@ export function UsernameModal({ isOpen, onClose }: UsernameModalProps) {
         setError("");
         setAvailable(true);
       }
-    } catch (err) {
+    } catch {
       setError("Error checking username availability");
       setAvailable(false);
     } finally {
@@ -96,8 +99,8 @@ export function UsernameModal({ isOpen, onClose }: UsernameModalProps) {
       // Create user profile with username
       await createUserProfile({ username });
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to create profile");
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Failed to create profile"));
     } finally {
       setLoading(false);
     }

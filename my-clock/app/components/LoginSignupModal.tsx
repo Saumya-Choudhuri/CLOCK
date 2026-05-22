@@ -10,12 +10,24 @@ interface LoginSignupModalProps {
   onClose: () => void;
 }
 
+type RazorpayOrderData = {
+  orderId: string;
+  keyId: string;
+  amount: number;
+  currency: string;
+  userEmail?: string;
+  userName?: string;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
 export function LoginSignupModal({ isOpen, onClose }: LoginSignupModalProps) {
   const { signInWithGoogle, activateMonthlyPremium } = useAuth();
   const [loading, setLoading] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [razorpayOrder, setRazorpayOrder] = useState<any>(null);
+  const [razorpayOrder, setRazorpayOrder] = useState<RazorpayOrderData | null>(null);
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
@@ -26,8 +38,8 @@ export function LoginSignupModal({ isOpen, onClose }: LoginSignupModalProps) {
     try {
       await signInWithGoogle();
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Google sign-in failed");
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Google sign-in failed"));
     } finally {
       setLoading(false);
     }
@@ -44,8 +56,8 @@ export function LoginSignupModal({ isOpen, onClose }: LoginSignupModalProps) {
       });
       setRazorpayOrder(orderData);
       setShowPaymentModal(true);
-    } catch (err: any) {
-      setError(err.message || "Unable to start Razorpay checkout");
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Unable to start Razorpay checkout"));
     } finally {
       setPremiumLoading(false);
     }
@@ -72,14 +84,20 @@ export function LoginSignupModal({ isOpen, onClose }: LoginSignupModalProps) {
       setShowPaymentModal(false);
       setRazorpayOrder(null);
       onClose();
-    } catch (error: any) {
-      setError(error?.message || "Payment verification failed.");
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Payment verification failed."));
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-      <div className="premium-panel w-full max-w-md mx-4 p-8">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop"
+      onClick={onClose}
+    >
+      <div
+        className="premium-panel w-full max-w-md mx-4 p-8"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="mb-6">
           <h2 className="text-2xl font-display title-glow text-[color:var(--foreground)] mb-2">
             Sign In to Your Account

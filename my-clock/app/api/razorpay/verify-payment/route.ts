@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       orderId: body.razorpay_order_id,
       paymentId: body.razorpay_payment_id,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Razorpay verify payment error:", error);
     return NextResponse.json(
       { error: "Unable to verify Razorpay payment.", paid: false },

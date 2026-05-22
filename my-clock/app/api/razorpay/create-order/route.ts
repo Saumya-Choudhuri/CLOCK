@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       userEmail: body.email || "",
       userName: body.username || "",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Razorpay create order error:", error);
     return NextResponse.json(
       { error: "Unable to create Razorpay order." },

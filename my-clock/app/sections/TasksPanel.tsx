@@ -33,9 +33,12 @@ export default function TasksPanel() {
   const diagnosticsRef = useRef<string>("");
   const { userData, checkFreeTrial, checkPremiumAccess } = useAuth();
   const [guestTrialStart, setGuestTrialStart] = useState<number | null>(null);
+  const [now, setNow] = useState<number | null>(null);
 
   const TRIAL_DAYS = 7;
   const TRIAL_TASK_LIMIT = 7;
+
+  const DAY_MS = 1000 * 60 * 60 * 24;
 
   const saveProgressData = useCallback((updatedTasks: Task[]) => {
     try {
@@ -128,6 +131,12 @@ export default function TasksPanel() {
     }
   }, [userData]);
 
+  useEffect(() => {
+    setNow(Date.now());
+    const interval = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   // Save tasks to localStorage
   useEffect(() => {
     if (!hasLoaded) return;
@@ -165,18 +174,19 @@ export default function TasksPanel() {
   };
 
   const trialStart = userData?.signupDate ?? guestTrialStart;
-  const trialDaysRemaining = trialStart
+  const nowValue = now ?? 0;
+  const trialDaysRemaining = trialStart && nowValue
     ? Math.max(
         0,
         TRIAL_DAYS -
-          Math.floor((Date.now() - trialStart) / (1000 * 60 * 60 * 24))
+          Math.floor((nowValue - trialStart) / DAY_MS)
       )
     : TRIAL_DAYS;
   const isTrialActive = userData ? checkFreeTrial() : trialDaysRemaining > 0;
   const premiumUntil = userData?.premiumUntil;
   const isPremiumActive = checkPremiumAccess();
-  const premiumDaysRemaining = premiumUntil
-    ? Math.max(0, Math.ceil((premiumUntil - Date.now()) / (1000 * 60 * 60 * 24)))
+  const premiumDaysRemaining = premiumUntil && nowValue
+    ? Math.max(0, Math.ceil((premiumUntil - nowValue) / DAY_MS))
     : 0;
   const canAddTask = isPremiumActive || (isTrialActive && tasks.length < TRIAL_TASK_LIMIT);
   const statusMessage = isPremiumActive

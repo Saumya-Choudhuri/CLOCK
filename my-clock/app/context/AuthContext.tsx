@@ -19,7 +19,7 @@ interface UserData {
   isPremium: boolean;
   premiumUntil?: number;
   lastActivityDate: number;
-  taskHistory: any[];
+  taskHistory: unknown[];
 }
 
 interface AuthContextType {

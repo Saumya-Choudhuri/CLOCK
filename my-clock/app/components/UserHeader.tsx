@@ -6,6 +6,18 @@ import { useAuthModal } from "@/app/context/AuthModalContext";
 import { PaymentModal } from "@/app/components/PaymentModal";
 import { startRazorpayCheckout } from "@/app/utils/razorpayCheckout";
 
+type RazorpayOrderData = {
+  orderId: string;
+  keyId: string;
+  amount: number;
+  currency: string;
+  userEmail?: string;
+  userName?: string;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
 export function UserHeader() {
   const { user, userData, signOutUser, activateMonthlyPremium } = useAuth();
   const { openLogin } = useAuthModal();
@@ -13,7 +25,7 @@ export function UserHeader() {
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [upgradeError, setUpgradeError] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [razorpayOrder, setRazorpayOrder] = useState<any>(null);
+  const [razorpayOrder, setRazorpayOrder] = useState<RazorpayOrderData | null>(null);
   const TRIAL_DAYS = 7;
   const PREMIUM_MONTH_DAYS = 30;
 
@@ -42,8 +54,8 @@ export function UserHeader() {
       await activateMonthlyPremium();
       setShowPaymentModal(false);
       setRazorpayOrder(null);
-    } catch (error: any) {
-      setUpgradeError(error?.message || "Payment verification failed.");
+    } catch (error: unknown) {
+      setUpgradeError(getErrorMessage(error, "Payment verification failed."));
     }
   };
 
@@ -65,8 +77,8 @@ export function UserHeader() {
       });
       setRazorpayOrder(orderData);
       setShowPaymentModal(true);
-    } catch (error: any) {
-      setUpgradeError(error?.message || "Unable to start checkout.");
+    } catch (error: unknown) {
+      setUpgradeError(getErrorMessage(error, "Unable to start checkout."));
     } finally {
       setUpgradeLoading(false);
     }

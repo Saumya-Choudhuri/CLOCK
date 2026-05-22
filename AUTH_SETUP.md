@@ -1,11 +1,11 @@
 # Auth & User Profile Setup Guide
 
-This guide will help you set up authentication and user profiles for your CLOCK app.
+This guide will help you set up authentication and user profiles for your Zoned app.
 
 ## Step 1: Create Firebase Project
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Click "Add project" and enter a name (e.g., "CLOCK-App")
+2. Click "Add project" and enter a name (e.g., "Zoned-App")
 3. Select your country and create the project
 4. Wait for project creation to complete
 

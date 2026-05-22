@@ -424,7 +424,7 @@ export default function CounterPanel({
 
   useEffect(() => {
     return () => clearTick();
-  }, []);
+  }, [clearTick]);
 
   const timeColor = theme === "light" ? "var(--clock-ink)" : "var(--clock-ink-inverse)";
   const secondaryColor =

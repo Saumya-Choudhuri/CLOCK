@@ -126,13 +126,35 @@ export default function Home() {
               <div className="flex flex-wrap items-start gap-6">
                 <div className="flex items-center gap-4 animate-rise stagger-1">
                   <div className="h-12 w-12 rounded-[16px] bg-[color:var(--foreground)] text-[color:var(--accent)] shadow-[0_10px_26px_rgba(13,15,18,0.25)] flex items-center justify-center">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--accent)]" />
+                    <svg
+                      viewBox="0 0 48 48"
+                      className="h-7 w-7"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        cx="24"
+                        cy="24"
+                        r="17"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        opacity="0.55"
+                      />
+                      <path
+                        d="M16 17h16L16 31h16"
+                        stroke="currentColor"
+                        strokeWidth="2.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="24" cy="24" r="3.5" fill="currentColor" />
+                    </svg>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[0.65rem] uppercase tracking-[0.4em] text-[color:var(--muted)]">
                       Precision Studio
                     </p>
-                    <h1 className="text-3xl md:text-4xl font-display title-glow">The Clock</h1>
+                    <h1 className="text-3xl md:text-4xl font-display title-glow">Zoned</h1>
                     <p className="text-sm text-[color:var(--muted)]">
                       Time, tasks, and focus in one calm system.
                     </p>
@@ -151,7 +173,7 @@ export default function Home() {
                   data-active={tab === "clock"}
                   onClick={() => setTab("clock")}
                 >
-                  Clock
+                  Zoned
                 </button>
 
                 <button

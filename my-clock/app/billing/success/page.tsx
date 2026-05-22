@@ -7,6 +7,9 @@ import { useAuth } from "@/app/context/AuthContext";
 
 type VerificationStatus = "loading" | "success" | "error";
 
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Payment verification failed.";
+
 export default function BillingSuccessPage() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id");
@@ -54,9 +57,9 @@ export default function BillingSuccessPage() {
         await activateMonthlyPremium();
         setStatus("success");
         setMessage("Payment confirmed. Monthly Premium is now active.");
-      } catch (error: any) {
+      } catch (error: unknown) {
         setStatus("error");
-        setMessage(error?.message || "Payment verification failed.");
+        setMessage(getErrorMessage(error));
       }
     };
 
