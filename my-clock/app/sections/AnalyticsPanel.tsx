@@ -69,6 +69,14 @@ type ReportTable = {
   rows: string[][];
 };
 
+type BarChartDatum = {
+  name: string;
+  sessions: number;
+  notes: number;
+  duration: number;
+  entries: number;
+};
+
 const COLORS = [
   "#0D0F12",
   "#C9FF3B",
@@ -315,37 +323,53 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
   };
 
   // Prepare data for bar chart
-  const getBarChartData = () => {
+  const getBarChartData = (): BarChartDatum[] => {
     const filteredTasks = getFilteredTasks();
     if (dataMode === "total") {
       return filteredTasks
-        .map((task) => ({
-          name: getTaskLabel(task),
-          sessions: formatToHours(getTaskSessionsDuration(task)),
-          notes: formatToHours(getTaskNotesDuration(task)),
-        }))
+        .map((task) => {
+          const sessions = formatToHours(getTaskSessionsDuration(task));
+          const notes = formatToHours(getTaskNotesDuration(task));
+          return {
+            name: getTaskLabel(task),
+            sessions,
+            notes,
+            duration: sessions + notes,
+            entries: getEntryCountByMode(task),
+          };
+        })
         .filter((entry) => entry.sessions > 0 || entry.notes > 0)
         .sort((a, b) => b.sessions + b.notes - (a.sessions + a.notes));
     }
     if (dataMode === "notes") {
       return filteredTasks
         .flatMap((task) =>
-          task.notes.map((note) => ({
-            name: getNoteLabel(task, note),
-            duration: formatToHours(note.duration),
-            entries: 1,
-          }))
+          task.notes.map((note) => {
+            const duration = formatToHours(note.duration);
+            return {
+              name: getNoteLabel(task, note),
+              sessions: 0,
+              notes: duration,
+              duration,
+              entries: 1,
+            };
+          })
         )
         .filter((entry) => entry.duration > 0)
         .sort((a, b) => b.duration - a.duration);
     }
     return filteredTasks
       .filter((task) => getTaskDurationByMode(task) > 0)
-      .map((task) => ({
-        name: getTaskLabel(task),
-        duration: formatToHours(getTaskDurationByMode(task)),
-        entries: getEntryCountByMode(task),
-      }))
+      .map((task) => {
+        const duration = formatToHours(getTaskDurationByMode(task));
+        return {
+          name: getTaskLabel(task),
+          sessions: duration,
+          notes: 0,
+          duration,
+          entries: getEntryCountByMode(task),
+        };
+      })
       .sort((a, b) => b.duration - a.duration);
   };
 
@@ -493,7 +517,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     };
   };
 
-  const buildBarTable = (barData: Array<Record<string, string | number>>): ReportTable => {
+  const buildBarTable = (barData: BarChartDatum[]): ReportTable => {
     if (dataMode === "total") {
       const rows = barData.map((entry) => {
         const sessions = typeof entry.sessions === "number" ? entry.sessions : 0;
@@ -513,10 +537,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     }
 
     if (dataMode === "notes") {
-      const rows = barData.map((entry) => {
-        const duration = typeof entry.duration === "number" ? entry.duration : 0;
-        return [String(entry.name ?? ""), formatHours(duration)];
-      });
+      const rows = barData.map((entry) => [String(entry.name ?? ""), formatHours(entry.duration)]);
       const summary = rows.length > 0
         ? `Longest note: ${rows[0][0]} at ${rows[0][1]}.`
         : "No bar chart data available for the selected period.";
@@ -528,11 +549,11 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
       };
     }
 
-    const rows = barData.map((entry) => {
-      const duration = typeof entry.duration === "number" ? entry.duration : 0;
-      const entries = typeof entry.entries === "number" ? entry.entries : 0;
-      return [String(entry.name ?? ""), formatHours(duration), Math.round(entries).toString()];
-    });
+    const rows = barData.map((entry) => [
+      String(entry.name ?? ""),
+      formatHours(entry.duration),
+      Math.round(entry.entries).toString(),
+    ]);
     const summary = rows.length > 0
       ? `Top task: ${rows[0][0]} with ${rows[0][1]}.`
       : "No bar chart data available for the selected period.";
@@ -632,8 +653,8 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
 
     const renderRow = (cells: string[], isHeader: boolean) => {
       pdf.setFont("helvetica", isHeader ? "bold" : "normal");
-      const lines = cells.map((cell, index) =>
-        pdf.splitTextToSize(cell || "", colWidths[index] - paddingX * 2)
+      const lines: string[][] = cells.map((cell, index) =>
+        pdf.splitTextToSize(cell || "", colWidths[index] - paddingX * 2) as string[]
       );
       const rowHeight =
         Math.max(...lines.map((line) => line.length)) * lineHeight + paddingY * 2;
@@ -644,10 +665,10 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
       }
 
       let x = marginX;
-      lines.forEach((cellLines, index) => {
+      lines.forEach((cellLines: string[], index: number) => {
         pdf.rect(x, y, colWidths[index], rowHeight);
         const textStartY = y + paddingY + lineHeight - 2;
-        cellLines.forEach((line, lineIndex) => {
+        cellLines.forEach((line: string, lineIndex: number) => {
           pdf.text(line, x + paddingX, textStartY + lineIndex * lineHeight);
         });
         x += colWidths[index];
@@ -813,7 +834,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
 
   const stats = calculateStats();
   const pieData = getPieChartData();
-  const barData = getBarChartData();
+  const barData: BarChartDatum[] = getBarChartData();
   const lineData = getLineChartData();
   const lineSeriesKeys =
     dataMode === "total"
