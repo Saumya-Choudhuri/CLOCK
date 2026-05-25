@@ -123,25 +123,16 @@ export function UsernameModal({ isOpen, onClose }: UsernameModalProps) {
             <label className="block text-xs uppercase tracking-[0.24em] text-[color:var(--muted)] mb-2">
               Username
             </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  setAvailable(null);
-                }}
-                placeholder="my_username"
-                className="input-premium flex-1"
-              />
-              <button
-                onClick={checkUsername}
-                disabled={loading || !username}
-                className="btn btn-muted px-4 py-2 text-[0.7rem] uppercase tracking-[0.26em]"
-              >
-                {loading ? "..." : "Check"}
-              </button>
-            </div>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setAvailable(null);
+              }}
+              placeholder="my_username"
+              className="input-premium w-full"
+            />
           </div>
 
           {available === true && (

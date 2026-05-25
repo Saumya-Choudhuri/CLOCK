@@ -30,6 +30,8 @@ import {
   WidthType,
 } from "docx";
 import { getProgressDiagnostics } from "../utils/progressDiagnostics";
+import { useAuth } from "../context/AuthContext";
+import { readProgressData } from "../utils/progressStorage";
 
 interface TaskSession {
   startTime: number;
@@ -91,6 +93,7 @@ const COLORS = [
 ];
 
 export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPanelProps) {
+  const { user, userData } = useAuth();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [chartType, setChartType] = useState<ChartType>("pie");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
@@ -98,6 +101,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
   const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
   const [isMounted, setIsMounted] = useState(false);
   const diagnosticsRef = useRef<string>("");
+  const progressKey = user?.uid ?? userData?.uid ?? null;
 
   const nameCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -143,7 +147,8 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
     let lastDataStr = "";
     
     const loadTasks = () => {
-      const saved = window.localStorage.getItem("progress_data");
+      const { stored } = readProgressData(progressKey);
+      const saved = stored;
       if (!saved) {
         if (lastDataStr !== "") {
           lastDataStr = "";
@@ -166,7 +171,11 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
         }
       } catch (error) {
         console.error("Failed to load progress data:", error);
-        window.localStorage.removeItem("progress_data");
+        if (progressKey) {
+          window.localStorage.removeItem(`progress_data_${progressKey}`);
+        } else {
+          window.localStorage.removeItem("progress_data_guest");
+        }
         lastDataStr = "";
         setTasks([]);
       }
@@ -179,7 +188,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
 
     // Listen for storage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "progress_data") {
+      if (e.key === `progress_data_${progressKey ?? "guest"}`) {
         loadTasks();
       }
     };
@@ -190,7 +199,7 @@ export default function AnalyticsPanel({ tasks: initialTasks = [] }: AnalyticsPa
       clearInterval(interval);
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []);
+  }, [progressKey]);
 
   // Calculate total duration for a task (including both sessions and notes)
   const getTaskSessionsDuration = (task: Task): number => {

@@ -16,6 +16,8 @@ interface ClockPanelProps {
   onThemeChange?: (theme: "light" | "dark") => void;
   clockFont?: ClockFont;
   onClockFontChange?: (font: ClockFont) => void;
+  timeFormat?: "12h" | "24h";
+  onTimeFormatChange?: (format: "12h" | "24h") => void;
   onBackgroundChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -30,11 +32,14 @@ export default function ClockPanel({
   onThemeChange,
   clockFont = "display",
   onClockFontChange,
+  timeFormat = "24h",
+  onTimeFormatChange,
   onBackgroundChange,
 }: ClockPanelProps) {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const timerRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -45,6 +50,13 @@ export default function ClockPanel({
     hideTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
     }, 2000);
+  };
+
+  const handleMouseLeave = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+    setShowControls(false);
   };
 
   const handleFullscreen = async () => {
@@ -73,11 +85,9 @@ export default function ClockPanel({
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    document.addEventListener("mousemove", handleMouseMove);
     
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("mousemove", handleMouseMove);
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, []);
@@ -88,6 +98,9 @@ export default function ClockPanel({
         className="premium-panel premium-frame clock-stage h-[70vh]"
         data-theme={theme}
         ref={timerRef}
+        onMouseEnter={handleMouseMove}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         style={isFullscreen ? { height: "100vh", borderRadius: 0 } : {}}
       >
         {backgroundUrl && backgroundType === "image" && (
@@ -159,68 +172,101 @@ export default function ClockPanel({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">
-              Typeface:
-            </label>
-            <select
-              value={clockFont}
-              onChange={(e) => onClockFontChange?.(e.target.value as ClockFont)}
-              className="select-premium w-auto text-xs"
+          <div className="flex gap-2 items-center">
+            <label className="text-xs text-[color:var(--muted)] font-medium">Format:</label>
+            <button
+              onClick={() => onTimeFormatChange?.("12h")}
+              className={`btn px-3 py-1.5 text-xs ${
+                timeFormat === "12h" ? "btn-primary" : "btn-ghost"
+              }`}
             >
-              <option value="display">Syne</option>
-              <option value="grotesk">Space Grotesk</option>
-              <option value="sora">Sora</option>
-              <option value="mono">JetBrains Mono</option>
-            </select>
+              12h
+            </button>
+            <button
+              onClick={() => onTimeFormatChange?.("24h")}
+              className={`btn px-3 py-1.5 text-xs ${
+                timeFormat === "24h" ? "btn-primary" : "btn-ghost"
+              }`}
+            >
+              24h
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">Brightness:</label>
-            <input
-              type="range"
-              min={0.2}
-              max={1}
-              step={0.05}
-              value={overlayOpacity}
-              onChange={(e) => onOpacityChange?.(Number(e.target.value))}
-              className="w-24 range-premium"
-            />
-            <div className="text-xs font-mono tabular-nums w-7 text-right text-[color:var(--muted)]">
-              {Math.round(overlayOpacity * 100)}%
-            </div>
+            <button
+              onClick={() => setShowAdvanced((prev) => !prev)}
+              className="btn btn-muted px-3 py-1.5 text-xs"
+            >
+              {showAdvanced ? "Hide options" : "More options"}
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">BG Opacity:</label>
-            <input
-              type="range"
-              min={0.2}
-              max={1}
-              step={0.05}
-              value={backgroundOpacity}
-              onChange={(e) => onBackgroundOpacityChange?.(Number(e.target.value))}
-              className="w-24 range-premium"
-            />
-            <div className="text-xs font-mono tabular-nums w-7 text-right text-[color:var(--muted)]">
-              {Math.round(backgroundOpacity * 100)}%
-            </div>
-          </div>
+          {showAdvanced && (
+            <>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">
+                  Typeface:
+                </label>
+                <select
+                  value={clockFont}
+                  onChange={(e) => onClockFontChange?.(e.target.value as ClockFont)}
+                  className="select-premium w-auto text-xs"
+                >
+                  <option value="display">Syne</option>
+                  <option value="grotesk">Space Grotesk</option>
+                  <option value="sora">Sora</option>
+                  <option value="mono">JetBrains Mono</option>
+                </select>
+              </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">
-              Background:
-            </label>
-            <label className="btn btn-outline px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] cursor-pointer">
-              Choose
-              <input
-                type="file"
-                accept="image/*,video/*"
-                onChange={onBackgroundChange}
-                className="hidden"
-              />
-            </label>
-          </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">Brightness:</label>
+                <input
+                  type="range"
+                  min={0.2}
+                  max={1}
+                  step={0.05}
+                  value={overlayOpacity}
+                  onChange={(e) => onOpacityChange?.(Number(e.target.value))}
+                  className="w-24 range-premium"
+                />
+                <div className="text-xs font-mono tabular-nums w-7 text-right text-[color:var(--muted)]">
+                  {Math.round(overlayOpacity * 100)}%
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">BG Opacity:</label>
+                <input
+                  type="range"
+                  min={0.2}
+                  max={1}
+                  step={0.05}
+                  value={backgroundOpacity}
+                  onChange={(e) => onBackgroundOpacityChange?.(Number(e.target.value))}
+                  className="w-24 range-premium"
+                />
+                <div className="text-xs font-mono tabular-nums w-7 text-right text-[color:var(--muted)]">
+                  {Math.round(backgroundOpacity * 100)}%
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-[color:var(--muted)] font-medium whitespace-nowrap">
+                  Background:
+                </label>
+                <label className="btn btn-outline px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] cursor-pointer">
+                  Choose
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={onBackgroundChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </>
+          )}
         </div>
 
         <div
@@ -229,7 +275,7 @@ export default function ClockPanel({
             opacity: overlayOpacity,
           }}
         >
-          <ClockScreen theme={theme} />
+          <ClockScreen theme={theme} timeFormat={timeFormat} />
         </div>
       </div>
     </div>

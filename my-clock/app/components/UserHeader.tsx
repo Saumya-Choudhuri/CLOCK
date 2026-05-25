@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useAuthModal } from "@/app/context/AuthModalContext";
 import { PaymentModal } from "@/app/components/PaymentModal";
@@ -26,8 +26,29 @@ export function UserHeader() {
   const [upgradeError, setUpgradeError] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [razorpayOrder, setRazorpayOrder] = useState<RazorpayOrderData | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const TRIAL_DAYS = 7;
   const PREMIUM_MONTH_DAYS = 30;
+
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (!dropdownRef.current || !target) return;
+      if (!dropdownRef.current.contains(target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
+  }, [showDropdown]);
 
   const handleSignOut = async () => {
     await signOutUser();
@@ -120,7 +141,7 @@ export function UserHeader() {
     : "bg-[color:var(--muted)]";
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         className="flex items-center justify-center h-10 w-10 rounded-full border border-[color:var(--border)] bg-[rgba(255,255,255,0.85)] text-[color:var(--foreground)] font-semibold text-sm shadow-[0_10px_26px_rgba(13,15,18,0.15)] transition-colors hover:border-[color:rgba(13,15,18,0.45)]"
@@ -131,7 +152,7 @@ export function UserHeader() {
 
       {showDropdown && (
         <div
-          className="absolute right-0 mt-3 w-64 panel-surface shadow-[0_22px_60px_rgba(13,15,18,0.18)] z-50 overflow-hidden"
+          className="absolute right-0 mt-3 w-64 panel-surface panel-solid shadow-[0_22px_60px_rgba(13,15,18,0.18)] z-50 overflow-hidden"
         >
           {user ? (
             <>

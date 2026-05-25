@@ -8,9 +8,10 @@ function pad(n: number) {
 
 interface ClockScreenProps {
   theme?: "light" | "dark";
+  timeFormat?: "12h" | "24h";
 }
 
-export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
+export default function ClockScreen({ theme = "light", timeFormat = "24h" }: ClockScreenProps) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -19,13 +20,23 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
     return () => clearInterval(t);
   }, []);
 
-  const time = useMemo(() => {
-    if (!now) return "--:--:--";
+  const timeDisplay = useMemo(() => {
+    if (!now) {
+      return { time: "--:--:--", period: "" };
+    }
+
     const h = now.getHours();
     const m = now.getMinutes();
     const s = now.getSeconds();
-    return `${pad(h)}:${pad(m)}:${pad(s)}`;
-  }, [now]);
+
+    if (timeFormat === "12h") {
+      const displayHours = ((h + 11) % 12) + 1;
+      const period = h >= 12 ? "PM" : "AM";
+      return { time: `${pad(displayHours)}:${pad(m)}:${pad(s)}`, period };
+    }
+
+    return { time: `${pad(h)}:${pad(m)}:${pad(s)}`, period: "" };
+  }, [now, timeFormat]);
 
   const date = useMemo(() => {
     if (!now) return "Loading date...";
@@ -49,7 +60,12 @@ export default function ClockScreen({ theme = "light" }: ClockScreenProps) {
             color: timeColor,
           }}
         >
-          {time}
+          {timeDisplay.time}
+          {timeDisplay.period && (
+            <span className="ml-3 text-base md:text-lg uppercase tracking-[0.25em]">
+              {timeDisplay.period}
+            </span>
+          )}
         </div>
         <div
           className="mt-4 text-xs uppercase tracking-[0.25em]"

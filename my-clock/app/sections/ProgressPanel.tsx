@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { readProgressData } from "../utils/progressStorage";
 
 interface TaskSession {
   startTime: number;
@@ -35,10 +37,12 @@ export default function ProgressPanel({
   onTaskSessionComplete,
   currentProgressTask,
 }: ProgressPanelProps) {
+  const { user, userData } = useAuth();
   const [userName, setUserName] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showNameInput, setShowNameInput] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const progressKey = user?.uid ?? userData?.uid ?? null;
 
   // Declare functions before useEffect
   const addSessionToTask = useCallback((taskId: string, duration: number) => {
@@ -80,25 +84,27 @@ export default function ProgressPanel({
 
   const saveProgressData = useCallback((updatedUserName: string, updatedTasks: Task[]) => {
     try {
-      const existing = window.localStorage.getItem("progress_data");
+      const { key, stored } = readProgressData(progressKey);
+      const existing = stored;
       const parsed = existing ? JSON.parse(existing) : null;
       const payload = parsed && typeof parsed === "object"
         ? { ...parsed, userName: updatedUserName, tasks: updatedTasks }
         : { userName: updatedUserName, tasks: updatedTasks };
-      window.localStorage.setItem("progress_data", JSON.stringify(payload));
+      window.localStorage.setItem(key, JSON.stringify(payload));
     } catch (error) {
       console.error("Failed to save progress data:", error);
       window.localStorage.setItem(
-        "progress_data",
+        `progress_data_${progressKey ?? "guest"}`,
         JSON.stringify({ userName: updatedUserName, tasks: updatedTasks })
       );
     }
-  }, []);
+  }, [progressKey]);
 
   // Load from localStorage
   useEffect(() => {
     setIsMounted(true);
-    const saved = window.localStorage.getItem("progress_data");
+    const { stored } = readProgressData(progressKey);
+    const saved = stored;
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -116,7 +122,7 @@ export default function ProgressPanel({
         setShowNameInput(true);
       }
     }
-  }, []);
+  }, [progressKey]);
 
   // Check for pending sessions from Counter
   useEffect(() => {
