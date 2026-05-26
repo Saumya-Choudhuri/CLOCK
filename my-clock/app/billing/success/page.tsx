@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 
 type VerificationStatus = "loading" | "success" | "error";
@@ -10,7 +10,7 @@ type VerificationStatus = "loading" | "success" | "error";
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Payment verification failed.";
 
-export default function BillingSuccessPage() {
+function BillingSuccessContent() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id");
   const orderId = searchParams.get("order_id");
@@ -92,5 +92,33 @@ export default function BillingSuccessPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function BillingSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen premium-bg text-[color:var(--foreground)]">
+          <div className="ambient-orbs" aria-hidden="true" />
+          <div className="app-shell py-16">
+            <div className="max-w-xl mx-auto premium-panel p-8 text-center">
+              <h1 className="text-3xl font-display title-glow mb-3">Payment Status</h1>
+              <p className="text-sm text-[color:var(--muted)] mb-6">
+                Loading payment details...
+              </p>
+              <Link
+                href="/"
+                className="btn btn-outline inline-flex px-6 py-3 text-[0.7rem] uppercase tracking-[0.28em]"
+              >
+                Return Home
+              </Link>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <BillingSuccessContent />
+    </Suspense>
   );
 }
