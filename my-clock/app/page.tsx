@@ -22,7 +22,7 @@ export default function Home() {
   const [overlayOpacity, setOverlayOpacity] = useState(0.6);
   const [backgroundOpacity, setBackgroundOpacity] = useState(0.6);
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [clockFont, setClockFont] = useState<ClockFont>("display");
+  const [clockFont, setClockFont] = useState<ClockFont>("sora");
   const [timeFormat, setTimeFormat] = useState<TimeFormat>("24h");
   const lockedTabs: Tab[] = ["counter", "tasks", "analytics"];
   const isTabLocked = (target: Tab) => !user && lockedTabs.includes(target);

@@ -30,7 +30,7 @@ export default function ClockPanel({
   onOpacityChange,
   onBackgroundOpacityChange,
   onThemeChange,
-  clockFont = "display",
+  clockFont = "sora",
   onClockFontChange,
   timeFormat = "24h",
   onTimeFormatChange,

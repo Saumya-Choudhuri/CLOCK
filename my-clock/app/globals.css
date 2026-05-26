@@ -11,7 +11,7 @@
   --panel-2: #f0efea;
   --border: rgba(13, 15, 18, 0.12);
   --shadow: 0 24px 60px rgba(15, 17, 18, 0.12);
-  --clock-font: var(--font-display);
+  --clock-font: var(--font-sora);
   --clock-ink: #0d0f12;
   --clock-ink-inverse: #f7f6f2;
   --clock-subtle: rgba(13, 15, 18, 0.55);

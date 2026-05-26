@@ -76,7 +76,7 @@ export default function CounterPanel({
   onOpacityChange,
   onBackgroundOpacityChange,
   onThemeChange,
-  clockFont = "display",
+  clockFont = "sora",
   onClockFontChange,
   onBackgroundChange,
   onGoToTasks,
