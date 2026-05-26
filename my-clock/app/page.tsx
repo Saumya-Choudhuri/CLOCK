@@ -26,30 +26,6 @@ export default function Home() {
   const [timeFormat, setTimeFormat] = useState<TimeFormat>("24h");
   const lockedTabs: Tab[] = ["counter", "tasks", "analytics"];
   const isTabLocked = (target: Tab) => !user && lockedTabs.includes(target);
-  const introSteps: Array<{ title: string; description: string; tab: Tab }> = [
-    {
-      title: "Zoned",
-      description: "Live clock with calm visuals and quick environment controls.",
-      tab: "clock",
-    },
-    {
-      title: "Counter",
-      description: "Track focused sessions and add notes to your selected task.",
-      tab: "counter",
-    },
-    {
-      title: "Tasks",
-      description: "Manage task names, review notes, and keep your work organized.",
-      tab: "tasks",
-    },
-    {
-      title: "Analytics",
-      description: "See trends, totals, and reports for your tracked time.",
-      tab: "analytics",
-    },
-  ];
-  const [introStepIndex, setIntroStepIndex] = useState(0);
-  const activeIntro = introSteps[introStepIndex];
   
   // Progress tracking
   const [currentProgressTask] = useState<{
@@ -347,87 +323,6 @@ export default function Home() {
             </div>
           </section>
         </div>
-
-        {user && (
-          <section className="app-shell pt-6 pb-2 relative z-10">
-            <div className="panel-surface p-6 md:p-8 space-y-4 animate-rise">
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--muted)]">
-                  Welcome
-                </p>
-                <h2 className="text-2xl md:text-3xl font-display text-[color:var(--foreground)]">
-                  Step-by-step workspace intro
-                </h2>
-                <p className="text-sm text-[color:var(--muted)]">
-                  Click through each step to learn what every section does, then jump straight there.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {introSteps.map((step, index) => (
-                  <button
-                    key={step.title}
-                    type="button"
-                    onClick={() => setIntroStepIndex(index)}
-                    className={`btn px-3 py-1.5 text-xs ${
-                      introStepIndex === index ? "btn-primary" : "btn-ghost"
-                    }`}
-                  >
-                    Step {index + 1}
-                  </button>
-                ))}
-                <span className="text-xs text-[color:var(--muted)]">
-                  {introStepIndex + 1} / {introSteps.length}
-                </span>
-              </div>
-
-              {activeIntro && (
-                <div className="card-surface p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">
-                      {activeIntro.title}
-                    </p>
-                    <p className="text-sm text-[color:var(--foreground)]">
-                      {activeIntro.description}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-outline px-4 py-2 text-sm"
-                      onClick={() => setTab(activeIntro.tab)}
-                    >
-                      Open {activeIntro.title}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost px-3 py-2 text-xs"
-                      onClick={() =>
-                        setIntroStepIndex((prev) => Math.max(0, prev - 1))
-                      }
-                      disabled={introStepIndex === 0}
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-primary px-3 py-2 text-xs"
-                      onClick={() =>
-                        setIntroStepIndex((prev) =>
-                          Math.min(introSteps.length - 1, prev + 1)
-                        )
-                      }
-                      disabled={introStepIndex === introSteps.length - 1}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
 
         <section className="app-shell pb-10 relative z-10">
           <div className="mt-6 md:mt-8">
