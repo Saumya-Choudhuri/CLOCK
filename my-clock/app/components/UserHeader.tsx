@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
 import { useAuthModal } from "@/app/context/AuthModalContext";
 import { PaymentModal } from "@/app/components/PaymentModal";
@@ -157,6 +158,14 @@ export function UserHeader() {
           {user ? (
             <>
               <div className="px-4 py-3 border-b border-[color:var(--border)]">
+                <Link
+                  href="/landing"
+                  className="text-xs uppercase tracking-[0.2em] text-[color:var(--accent)] hover:text-[color:var(--accent-strong)] transition-colors font-semibold"
+                >
+                  ← Back to Landing
+                </Link>
+              </div>
+              <div className="px-4 py-3 border-b border-[color:var(--border)]">
                 {userData?.username && (
                   <div className="mb-2">
                     <p className="text-[0.65rem] uppercase tracking-[0.3em] text-[color:var(--muted)]">
@@ -242,6 +251,14 @@ export function UserHeader() {
             </>
           ) : (
             <>
+              <div className="px-4 py-3 border-b border-[color:var(--border)]">
+                <Link
+                  href="/landing"
+                  className="text-xs uppercase tracking-[0.2em] text-[color:var(--accent)] hover:text-[color:var(--accent-strong)] transition-colors font-semibold"
+                >
+                  ← Back to Landing
+                </Link>
+              </div>
               <div className="px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.24em] text-[color:var(--muted)] mb-3">
                   No account yet?

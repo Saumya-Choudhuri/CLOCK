@@ -1,0 +1,6 @@
+{
+  "name": "Zoned",
+  "description": "Precision with Soul. A premium focus environment for high-performance professionals with interactive focus timers, task management, and analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
