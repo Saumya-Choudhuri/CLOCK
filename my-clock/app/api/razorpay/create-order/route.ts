@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   // 1. Moved INSIDE the function to prevent aggressive Next.js caching
   const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -33,7 +35,7 @@ export async function POST(request: Request) {
     const order = await razorpay.orders.create({
       amount: 29900, // INR 299 in paise
       currency: "INR",
-      receipt: `${body.uid}-${Date.now()}`,
+      receipt: `rcpt_${body.uid.substring(0, 15)}-${Date.now()}`,
       notes: {
         uid: body.uid,
         email: body.email || "",
@@ -64,3 +66,6 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+

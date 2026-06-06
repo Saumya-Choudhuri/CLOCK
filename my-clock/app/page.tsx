@@ -8,13 +8,15 @@ import TasksPanel from "./sections/TasksPanel";
 import { UserHeader } from "./components/UserHeader";
 import { useAuth } from "./context/AuthContext";
 import { useAuthModal } from "./context/AuthModalContext";
+import { startRazorpayCheckout } from "./utils/razorpayCheckout";
+import { PaymentModal } from "./components/PaymentModal";
 
 type Tab = "clock" | "counter" | "analytics" | "tasks";
 type ClockFont = "display" | "grotesk" | "sora" | "mono";
 type TimeFormat = "12h" | "24h";
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, userData, checkFreeTrial, checkPremiumAccess, activateMonthlyPremium } = useAuth();
   const { openLogin } = useAuthModal();
   const [tab, setTab] = useState<Tab>("clock");
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
@@ -25,7 +27,62 @@ export default function Home() {
   const [clockFont, setClockFont] = useState<ClockFont>("sora");
   const [timeFormat, setTimeFormat] = useState<TimeFormat>("24h");
   const lockedTabs: Tab[] = ["counter", "tasks", "analytics"];
-  const isTabLocked = (target: Tab) => !user && lockedTabs.includes(target);
+  
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [razorpayOrder, setRazorpayOrder] = useState<any>(null);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState("");
+
+  const isTabLocked = (target: Tab) => {
+    if (!lockedTabs.includes(target)) return false;
+    if (!user) return true;
+    return !checkFreeTrial() && !checkPremiumAccess();
+  };
+
+  const handleOpenPaymentModal = async () => {
+    if (!user) return;
+    setUpgradeError("");
+    setUpgradeLoading(true);
+    try {
+      const orderData = await startRazorpayCheckout({
+        uid: user.uid,
+        email: user.email || undefined,
+        username: userData?.username || undefined,
+      });
+      setRazorpayOrder(orderData);
+      setShowPaymentModal(true);
+    } catch (error: any) {
+      setUpgradeError(error?.message || "Unable to start checkout.");
+    } finally {
+      setUpgradeLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentId: string, orderId: string) => {
+    try {
+      setUpgradeLoading(true);
+      const response = await fetch("/api/razorpay/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          razorpay_payment_id: paymentId,
+          razorpay_order_id: orderId,
+          razorpay_signature: "",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Payment verification failed.");
+      }
+      await activateMonthlyPremium();
+      setShowPaymentModal(false);
+      setRazorpayOrder(null);
+    } catch (error: any) {
+      setUpgradeError(error?.message || "Payment verification failed.");
+    } finally {
+      setUpgradeLoading(false);
+    }
+  };
   
   // Progress tracking
   const [currentProgressTask] = useState<{
@@ -148,32 +205,55 @@ export default function Home() {
     }
   }, [timeFormat]);
 
-  const renderLockedPanel = (title: string, message: string) => (
-    <div className="panel-surface mx-auto max-w-md p-6 text-center space-y-4">
-      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--border)]">
-        <svg
-          viewBox="0 0 24 24"
-          className="h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <rect x="5" y="11" width="14" height="9" rx="2" />
-          <path d="M8 11V8a4 4 0 1 1 8 0v3" />
-        </svg>
+  const renderLockedPanel = (title: string, message: string) => {
+    const isTrialOver = user && !checkFreeTrial() && !checkPremiumAccess();
+
+    return (
+      <div className="panel-surface mx-auto max-w-md p-6 text-center space-y-4">
+        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--border)]">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="5" y="11" width="14" height="9" rx="2" />
+            <path d="M8 11V8a4 4 0 1 1 8 0v3" />
+          </svg>
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-[color:var(--foreground)]">
+            {isTrialOver ? `${title.replace("locked", "Expired")}` : title}
+          </h2>
+          <p className="text-sm text-[color:var(--muted)]">
+            {isTrialOver
+              ? "Your free trial has ended. Upgrade to Premium Pro to continue using this feature."
+              : message}
+          </p>
+        </div>
+        {isTrialOver ? (
+          <button
+            onClick={handleOpenPaymentModal}
+            disabled={upgradeLoading}
+            className="btn btn-primary px-5 py-2 text-sm"
+          >
+            {upgradeLoading ? "Loading..." : "Upgrade to Pro"}
+          </button>
+        ) : (
+          <button onClick={openLogin} className="btn btn-primary px-5 py-2 text-sm">
+            Sign in to unlock
+          </button>
+        )}
+        {isTrialOver && upgradeError && (
+          <p className="text-xs text-[color:var(--foreground)] mt-2 bg-[rgba(224,122,95,0.12)] border border-[rgba(224,122,95,0.35)] rounded-xl py-2 px-3">{upgradeError}</p>
+        )}
       </div>
-      <div className="space-y-2">
-        <h2 className="text-xl font-bold text-[color:var(--foreground)]">{title}</h2>
-        <p className="text-sm text-[color:var(--muted)]">{message}</p>
-      </div>
-      <button onClick={openLogin} className="btn btn-primary px-5 py-2 text-sm">
-        Sign in to unlock
-      </button>
-    </div>
-  );
+    );
+  };
 
   return (
     <main
@@ -407,6 +487,22 @@ export default function Home() {
           </div>
         </section>
       </div>
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setRazorpayOrder(null);
+          setUpgradeError("");
+        }}
+        onPaymentSuccess={handlePaymentSuccess}
+        loading={upgradeLoading}
+        error={upgradeError}
+        orderId={razorpayOrder?.orderId}
+        keyId={razorpayOrder?.keyId}
+        userEmail={razorpayOrder?.userEmail}
+        userName={razorpayOrder?.userName}
+      />
     </main>
   );
 }

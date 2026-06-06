@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useAuthModal } from "@/app/context/AuthModalContext";
 import { UserHeader } from "@/app/components/UserHeader";
-import { startRazorpayCheckout } from "@/app/utils/razorpayCheckout";
+import { startRazorpayCheckout, loadRazorpayScript } from "@/app/utils/razorpayCheckout";
 
 const processSteps = [
   {
@@ -115,10 +115,16 @@ export default function LandingPage() {
         },
       };
 
-      if (window.Razorpay) {
-        const razorpay = new window.Razorpay(options);
-        razorpay.open();
+      if (!window.Razorpay) {
+        const loaded = await loadRazorpayScript();
+        if (!loaded || !window.Razorpay) {
+          alert("Failed to load Razorpay checkout portal. This is typically caused by an ad-blocker (such as uBlock Origin, Brave Shields, or AdBlock) blocking payment scripts, or network issues. Please temporarily disable your ad-blocker and refresh the page to complete your upgrade.");
+          return;
+        }
       }
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
     } catch (error) {
       console.error("Checkout error:", error);
       alert("Failed to start checkout. Please try again.");
@@ -211,7 +217,7 @@ export default function LandingPage() {
               </button>
             )}
             <div className="hidden lg:block">
-              <UserHeader />
+              <UserHeader showBackToLanding={false} />
             </div>
           </div>
         </div>
@@ -251,7 +257,7 @@ export default function LandingPage() {
                     onClick={handleGoToClock}
                     className="w-full sm:w-auto px-8 py-4 bg-zon-lime text-zon-primary rounded-full font-bold text-sm tracking-wide shadow-lg shadow-zon-lime/20 hover:scale-105 active:scale-95 hover:bg-zon-dark hover:text-white transition-all duration-300"
                   >
-                    Start Free Trial
+                    {user ? "Open Dashboard" : "Start Free Trial"}
                   </button>
                   <button
                     onClick={handleUpgradeClick}
@@ -522,7 +528,7 @@ export default function LandingPage() {
                     <li className="line-through opacity-35">Advanced analytics</li>
                   </ul>
                 </div>
-                {isPremiumActive ? (
+                {user ? (
                   <button
                     onClick={handleGoToClock}
                     className="w-full py-4 rounded-full border border-white/20 hover:bg-white hover:text-zon-dark transition-all duration-300 font-bold text-sm uppercase tracking-wider active:scale-95"
@@ -559,7 +565,7 @@ export default function LandingPage() {
                 </div>
 
                 <button
-                  onClick={openLogin}
+                  onClick={isPremiumActive ? handleGoToClock : handleUpgradeClick}
                   className="w-full py-4 rounded-full bg-zon-dark text-white hover:bg-white hover:text-zon-dark active:scale-95 transition-all duration-300 font-bold text-sm uppercase tracking-wider shadow-lg shadow-zon-dark/10"
                 >
                   {isPremiumActive ? "Active Membership" : "Get Premium Now"}

@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import Razorpay from "razorpay";
 
-const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
   if (!RAZORPAY_KEY_SECRET) {
     return NextResponse.json(
       { error: "Razorpay is not configured." },

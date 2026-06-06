@@ -162,7 +162,7 @@ export default function LandingPage() {
               Upgrade to Pro
             </button>
             <div className="hidden lg:block">
-              <UserHeader />
+              <UserHeader showBackToLanding={false} />
             </div>
           </div>
         </div>

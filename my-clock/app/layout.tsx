@@ -44,13 +44,11 @@ export default function RootLayout({
       lang="en"
       className={`${sora.variable} ${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
-      <head>
+      <body className="min-h-full flex flex-col">
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="lazyOnload"
+          strategy="afterInteractive"
         />
-      </head>
-      <body className="min-h-full flex flex-col">
         <AuthProvider>
           <AuthGuard>{children}</AuthGuard>
         </AuthProvider>

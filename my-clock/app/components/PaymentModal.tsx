@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { loadRazorpayScript } from "@/app/utils/razorpayCheckout";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -61,18 +63,18 @@ export function PaymentModal({
   userName,
 }: PaymentModalProps) {
   const [processing, setProcessing] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!isOpen) return;
+    setLocalError(null);
 
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    // Attempt to load the script as soon as the modal is opened
+    loadRazorpayScript().catch((err) => {
+      console.error("Failed to pre-load Razorpay script:", err);
+    });
   }, [isOpen]);
 
   const handlePaymentClick = async () => {
@@ -81,6 +83,19 @@ export function PaymentModal({
     }
 
     setProcessing(true);
+    setLocalError(null);
+
+    // Double check script load
+    if (!window.Razorpay) {
+      const loaded = await loadRazorpayScript();
+      if (!loaded || !window.Razorpay) {
+        setLocalError(
+          "Failed to load the Razorpay payment portal. This is usually caused by an adblocker (e.g., uBlock Origin, Brave Shields, AdBlock) blocking third-party checkout scripts, or a network issue. Please disable your adblocker or try a different browser/network and refresh the page."
+        );
+        setProcessing(false);
+        return;
+      }
+    }
 
     const options = {
       key: keyId,
@@ -114,15 +129,18 @@ export function PaymentModal({
     try {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
-    } catch (error) {
-      console.error("Razorpay error:", error);
+    } catch (err: any) {
+      console.error("Razorpay error during initialization:", err);
+      setLocalError(err?.message || "Failed to initialize the Razorpay checkout portal.");
       setProcessing(false);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  const activeError = error || localError;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
       <div className="premium-panel w-full max-w-md mx-4 p-8">
         <div className="mb-5">
@@ -157,9 +175,9 @@ export function PaymentModal({
           </ul>
         </div>
 
-        {error && (
-          <div className="mb-4 rounded-xl border border-[rgba(224,122,95,0.35)] bg-[rgba(224,122,95,0.12)] px-4 py-3 text-xs text-[color:var(--foreground)]">
-            {error}
+        {activeError && (
+          <div className="mb-4 rounded-xl border border-[rgba(224,122,95,0.35)] bg-[rgba(224,122,95,0.12)] px-4 py-3 text-xs text-[color:var(--foreground)] break-words leading-relaxed">
+            {activeError}
           </div>
         )}
 
@@ -184,6 +202,8 @@ export function PaymentModal({
           Secure payment powered by Razorpay.
         </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+
