@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 
-const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
-
 export async function POST(request: Request) {
+  // 1. Moved INSIDE the function to prevent aggressive Next.js caching
+  const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+  // 2. Safe debugging logs - check your Vercel logs after clicking the button!
+  console.log("--- RAZORPAY KEY CHECK ---");
+  console.log("Key ID (First 8 chars):", RAZORPAY_KEY_ID ? RAZORPAY_KEY_ID.substring(0, 8) : "UNDEFINED");
+  console.log("Secret Key (Length):", RAZORPAY_KEY_SECRET ? RAZORPAY_KEY_SECRET.length : "UNDEFINED");
+  console.log("--------------------------");
+
   if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
     return NextResponse.json(
       { error: "Razorpay is not configured." },
