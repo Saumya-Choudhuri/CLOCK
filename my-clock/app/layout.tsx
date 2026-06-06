@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { JetBrains_Mono, Sora, Space_Grotesk, Syne } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
@@ -43,6 +44,12 @@ export default function RootLayout({
       lang="en"
       className={`${sora.variable} ${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
+      <head>
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="lazyOnload"
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <AuthProvider>
           <AuthGuard>{children}</AuthGuard>

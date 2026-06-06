@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useAuthModal } from "@/app/context/AuthModalContext";
 import { UserHeader } from "@/app/components/UserHeader";
+import { startRazorpayCheckout } from "@/app/utils/razorpayCheckout";
 
 const processSteps = [
   {
@@ -81,6 +82,46 @@ export default function LandingPage() {
   const handleGoToClock = () => {
     if (typeof window !== "undefined") {
       window.location.href = "/";
+    }
+  };
+
+  const handleUpgradeClick = async () => {
+    if (!user) {
+      openLogin();
+      return;
+    }
+
+    try {
+      const checkoutData = await startRazorpayCheckout({
+        uid: user.uid,
+        email: user.email,
+        username: user.displayName || "User",
+      });
+
+      const options = {
+        key: checkoutData.keyId,
+        amount: checkoutData.amount,
+        currency: checkoutData.currency,
+        order_id: checkoutData.orderId,
+        name: "Zoned",
+        description: `Premium Pro - ${billingCycle === "monthly" ? "Monthly" : "Annual"}`,
+        handler: function (response: any) {
+          window.location.href = "/billing/success";
+        },
+        modal: {
+          ondismiss: function () {
+            console.log("Payment cancelled");
+          },
+        },
+      };
+
+      if (window.Razorpay) {
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Failed to start checkout. Please try again.");
     }
   };
 
@@ -163,7 +204,7 @@ export default function LandingPage() {
             </span>
             {!isPremiumActive && (
               <button
-                onClick={openLogin}
+                onClick={handleUpgradeClick}
                 className="active:scale-95 px-5 py-2.5 rounded-full text-[11px] font-extrabold uppercase tracking-widest transition-all duration-300 bg-zon-lime text-zon-primary hover:bg-zon-dark hover:text-zon-lime glow-lime-sm"
               >
                 Upgrade to Pro
@@ -213,7 +254,7 @@ export default function LandingPage() {
                     Start Free Trial
                   </button>
                   <button
-                    onClick={openLogin}
+                    onClick={handleUpgradeClick}
                     className="w-full sm:w-auto px-8 py-4 bg-transparent border-2 border-zon-dark text-zon-dark rounded-full font-bold text-sm tracking-wide hover:bg-zon-dark hover:text-white active:scale-95 transition-all duration-300"
                   >
                     Upgrade to Pro
@@ -262,12 +303,21 @@ export default function LandingPage() {
                     </div>
 
                     <div className="pt-4 border-t border-white/10">
-                      <button
-                        onClick={openLogin}
-                        className="w-full py-3 bg-zon-lime text-zon-primary rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-zon-dark transition-all duration-300 transform active:scale-95 shadow-lg shadow-zon-lime/5"
-                      >
-                        {isPremiumActive ? "Manage Membership" : "Upgrade to Pro"}
-                      </button>
+                      {isPremiumActive ? (
+                        <button
+                          onClick={handleGoToClock}
+                          className="w-full py-3 bg-zon-lime text-zon-primary rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-zon-dark transition-all duration-300 transform active:scale-95 shadow-lg shadow-zon-lime/5"
+                        >
+                          Open Dashboard
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleUpgradeClick}
+                          className="w-full py-3 bg-zon-lime text-zon-primary rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-zon-dark transition-all duration-300 transform active:scale-95 shadow-lg shadow-zon-lime/5"
+                        >
+                          Upgrade to Pro
+                        </button>
+                      )}
                       <p className="text-[9px] text-white/40 mt-2 text-center uppercase tracking-widest">
                         Unlimited tasks and premium themes
                       </p>
