@@ -649,6 +649,12 @@ export default function LandingPage() {
                 <li><a href="#faq" className="hover:text-zon-primary transition-colors duration-200">Terms of Service</a></li>
               </ul>
             </div>
+            <div>
+              <h5 className="text-xs font-bold text-zon-dark uppercase tracking-widest mb-4">Support</h5>
+              <ul className="space-y-3 text-xs sm:text-sm text-zon-on-variant/80">
+                <li><a href="mailto:contact@zoneds.works" className="hover:text-zon-primary transition-colors duration-200">contact@zoneds.works</a></li>
+              </ul>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-10 border-t border-zon-dark/5">
